@@ -155,6 +155,78 @@ run/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/run.dir/build.make CMakeFiles/run.dir/build
 .PHONY : run/fast
 
+src/ACPI/acpi.o: src/ACPI/acpi.cpp.o
+.PHONY : src/ACPI/acpi.o
+
+# target to build an object file
+src/ACPI/acpi.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/AlopexOS.dir/build.make CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.o
+.PHONY : src/ACPI/acpi.cpp.o
+
+src/ACPI/acpi.i: src/ACPI/acpi.cpp.i
+.PHONY : src/ACPI/acpi.i
+
+# target to preprocess a source file
+src/ACPI/acpi.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/AlopexOS.dir/build.make CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.i
+.PHONY : src/ACPI/acpi.cpp.i
+
+src/ACPI/acpi.s: src/ACPI/acpi.cpp.s
+.PHONY : src/ACPI/acpi.s
+
+# target to generate assembly for a file
+src/ACPI/acpi.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/AlopexOS.dir/build.make CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.s
+.PHONY : src/ACPI/acpi.cpp.s
+
+src/ACPI/ecam.o: src/ACPI/ecam.cpp.o
+.PHONY : src/ACPI/ecam.o
+
+# target to build an object file
+src/ACPI/ecam.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/AlopexOS.dir/build.make CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.o
+.PHONY : src/ACPI/ecam.cpp.o
+
+src/ACPI/ecam.i: src/ACPI/ecam.cpp.i
+.PHONY : src/ACPI/ecam.i
+
+# target to preprocess a source file
+src/ACPI/ecam.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/AlopexOS.dir/build.make CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.i
+.PHONY : src/ACPI/ecam.cpp.i
+
+src/ACPI/ecam.s: src/ACPI/ecam.cpp.s
+.PHONY : src/ACPI/ecam.s
+
+# target to generate assembly for a file
+src/ACPI/ecam.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/AlopexOS.dir/build.make CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.s
+.PHONY : src/ACPI/ecam.cpp.s
+
+src/PCI/pcie.o: src/PCI/pcie.cpp.o
+.PHONY : src/PCI/pcie.o
+
+# target to build an object file
+src/PCI/pcie.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/AlopexOS.dir/build.make CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.o
+.PHONY : src/PCI/pcie.cpp.o
+
+src/PCI/pcie.i: src/PCI/pcie.cpp.i
+.PHONY : src/PCI/pcie.i
+
+# target to preprocess a source file
+src/PCI/pcie.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/AlopexOS.dir/build.make CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.i
+.PHONY : src/PCI/pcie.cpp.i
+
+src/PCI/pcie.s: src/PCI/pcie.cpp.s
+.PHONY : src/PCI/pcie.s
+
+# target to generate assembly for a file
+src/PCI/pcie.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/AlopexOS.dir/build.make CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.s
+.PHONY : src/PCI/pcie.cpp.s
+
 src/entry.o: src/entry.s.o
 .PHONY : src/entry.o
 
@@ -162,6 +234,30 @@ src/entry.o: src/entry.s.o
 src/entry.s.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/AlopexOS.dir/build.make CMakeFiles/AlopexOS.dir/src/entry.s.o
 .PHONY : src/entry.s.o
+
+src/kernel/cxx_abi.o: src/kernel/cxx_abi.cpp.o
+.PHONY : src/kernel/cxx_abi.o
+
+# target to build an object file
+src/kernel/cxx_abi.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/AlopexOS.dir/build.make CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.o
+.PHONY : src/kernel/cxx_abi.cpp.o
+
+src/kernel/cxx_abi.i: src/kernel/cxx_abi.cpp.i
+.PHONY : src/kernel/cxx_abi.i
+
+# target to preprocess a source file
+src/kernel/cxx_abi.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/AlopexOS.dir/build.make CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.i
+.PHONY : src/kernel/cxx_abi.cpp.i
+
+src/kernel/cxx_abi.s: src/kernel/cxx_abi.cpp.s
+.PHONY : src/kernel/cxx_abi.s
+
+# target to generate assembly for a file
+src/kernel/cxx_abi.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/AlopexOS.dir/build.make CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.s
+.PHONY : src/kernel/cxx_abi.cpp.s
 
 src/kernel/display.o: src/kernel/display.cpp.o
 .PHONY : src/kernel/display.o
@@ -270,7 +366,19 @@ help:
 	@echo "... disk_image"
 	@echo "... run"
 	@echo "... AlopexOS"
+	@echo "... src/ACPI/acpi.o"
+	@echo "... src/ACPI/acpi.i"
+	@echo "... src/ACPI/acpi.s"
+	@echo "... src/ACPI/ecam.o"
+	@echo "... src/ACPI/ecam.i"
+	@echo "... src/ACPI/ecam.s"
+	@echo "... src/PCI/pcie.o"
+	@echo "... src/PCI/pcie.i"
+	@echo "... src/PCI/pcie.s"
 	@echo "... src/entry.o"
+	@echo "... src/kernel/cxx_abi.o"
+	@echo "... src/kernel/cxx_abi.i"
+	@echo "... src/kernel/cxx_abi.s"
 	@echo "... src/kernel/display.o"
 	@echo "... src/kernel/display.i"
 	@echo "... src/kernel/display.s"

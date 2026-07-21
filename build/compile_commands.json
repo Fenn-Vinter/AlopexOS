@@ -25,6 +25,30 @@
 },
 {
   "directory": "/home/fenn/Desktop/AlopexOS/build",
+  "command": "/usr/bin/c++  -I/home/fenn/Desktop/AlopexOS/include -I/home/fenn/Desktop/AlopexOS/include/limine -I/home/fenn/Desktop/AlopexOS/lib/limine -std=c++23 -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-stack-check -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-pie -fno-pic -mcmodel=kernel -mno-red-zone -mgeneral-regs-only -mno-sse -mno-sse2 -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -o CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.o -c /home/fenn/Desktop/AlopexOS/src/kernel/cxx_abi.cpp",
+  "file": "/home/fenn/Desktop/AlopexOS/src/kernel/cxx_abi.cpp",
+  "output": "CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.o"
+},
+{
+  "directory": "/home/fenn/Desktop/AlopexOS/build",
+  "command": "/usr/bin/c++  -I/home/fenn/Desktop/AlopexOS/include -I/home/fenn/Desktop/AlopexOS/include/limine -I/home/fenn/Desktop/AlopexOS/lib/limine -std=c++23 -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-stack-check -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-pie -fno-pic -mcmodel=kernel -mno-red-zone -mgeneral-regs-only -mno-sse -mno-sse2 -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -o CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.o -c /home/fenn/Desktop/AlopexOS/src/PCI/pcie.cpp",
+  "file": "/home/fenn/Desktop/AlopexOS/src/PCI/pcie.cpp",
+  "output": "CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.o"
+},
+{
+  "directory": "/home/fenn/Desktop/AlopexOS/build",
+  "command": "/usr/bin/c++  -I/home/fenn/Desktop/AlopexOS/include -I/home/fenn/Desktop/AlopexOS/include/limine -I/home/fenn/Desktop/AlopexOS/lib/limine -std=c++23 -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-stack-check -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-pie -fno-pic -mcmodel=kernel -mno-red-zone -mgeneral-regs-only -mno-sse -mno-sse2 -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -o CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.o -c /home/fenn/Desktop/AlopexOS/src/ACPI/acpi.cpp",
+  "file": "/home/fenn/Desktop/AlopexOS/src/ACPI/acpi.cpp",
+  "output": "CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.o"
+},
+{
+  "directory": "/home/fenn/Desktop/AlopexOS/build",
+  "command": "/usr/bin/c++  -I/home/fenn/Desktop/AlopexOS/include -I/home/fenn/Desktop/AlopexOS/include/limine -I/home/fenn/Desktop/AlopexOS/lib/limine -std=c++23 -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-stack-check -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-pie -fno-pic -mcmodel=kernel -mno-red-zone -mgeneral-regs-only -mno-sse -mno-sse2 -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -o CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.o -c /home/fenn/Desktop/AlopexOS/src/ACPI/ecam.cpp",
+  "file": "/home/fenn/Desktop/AlopexOS/src/ACPI/ecam.cpp",
+  "output": "CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.o"
+},
+{
+  "directory": "/home/fenn/Desktop/AlopexOS/build",
   "command": "/usr/bin/c++  -I/home/fenn/Desktop/AlopexOS/include -I/home/fenn/Desktop/AlopexOS/include/limine -I/home/fenn/Desktop/AlopexOS/lib/limine -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-stack-check -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-pie -fno-pic -mcmodel=kernel -mno-red-zone -mgeneral-regs-only -mno-sse -mno-sse2 -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -o CMakeFiles/AlopexOS.dir/src/entry.s.o -c /home/fenn/Desktop/AlopexOS/src/entry.s",
   "file": "/home/fenn/Desktop/AlopexOS/src/entry.s",
   "output": "CMakeFiles/AlopexOS.dir/src/entry.s.o"

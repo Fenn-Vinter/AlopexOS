@@ -21,6 +21,10 @@ set(CMAKE_ASM_TARGET_INCLUDE_PATH
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/home/fenn/Desktop/AlopexOS/src/ACPI/acpi.cpp" "CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.o" "gcc" "CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.o.d"
+  "/home/fenn/Desktop/AlopexOS/src/ACPI/ecam.cpp" "CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.o" "gcc" "CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.o.d"
+  "/home/fenn/Desktop/AlopexOS/src/PCI/pcie.cpp" "CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.o" "gcc" "CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.o.d"
+  "/home/fenn/Desktop/AlopexOS/src/kernel/cxx_abi.cpp" "CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.o" "gcc" "CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.o.d"
   "/home/fenn/Desktop/AlopexOS/src/kernel/display.cpp" "CMakeFiles/AlopexOS.dir/src/kernel/display.cpp.o" "gcc" "CMakeFiles/AlopexOS.dir/src/kernel/display.cpp.o.d"
   "/home/fenn/Desktop/AlopexOS/src/kernel/limine_requests.cpp" "CMakeFiles/AlopexOS.dir/src/kernel/limine_requests.cpp.o" "gcc" "CMakeFiles/AlopexOS.dir/src/kernel/limine_requests.cpp.o.d"
   "/home/fenn/Desktop/AlopexOS/src/kernel/new.cpp" "CMakeFiles/AlopexOS.dir/src/kernel/new.cpp.o" "gcc" "CMakeFiles/AlopexOS.dir/src/kernel/new.cpp.o.d"

@@ -69,6 +69,10 @@ add_executable(AlopexOS
     src/kernel/limine_requests.cpp
     src/kernel/display.cpp
     src/kernel/new.cpp
+    src/kernel/cxx_abi.cpp
+    src/PCI/pcie.cpp
+    src/ACPI/acpi.cpp
+    src/ACPI/ecam.cpp
     src/entry.s
 )
 

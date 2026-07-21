@@ -89,12 +89,12 @@ clean: CMakeFiles/run.dir/clean
 CMakeFiles/AlopexOS.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/AlopexOS.dir/build.make CMakeFiles/AlopexOS.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/AlopexOS.dir/build.make CMakeFiles/AlopexOS.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=1,2,3,4,5,6 "Built target AlopexOS"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10 "Built target AlopexOS"
 .PHONY : CMakeFiles/AlopexOS.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/AlopexOS.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/fenn/Desktop/AlopexOS/build/CMakeFiles 6
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/fenn/Desktop/AlopexOS/build/CMakeFiles 10
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/AlopexOS.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/fenn/Desktop/AlopexOS/build/CMakeFiles 0
 .PHONY : CMakeFiles/AlopexOS.dir/rule
@@ -106,7 +106,7 @@ AlopexOS: CMakeFiles/AlopexOS.dir/rule
 # codegen rule for target.
 CMakeFiles/AlopexOS.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/AlopexOS.dir/build.make CMakeFiles/AlopexOS.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=1,2,3,4,5,6 "Finished codegen for target AlopexOS"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10 "Finished codegen for target AlopexOS"
 .PHONY : CMakeFiles/AlopexOS.dir/codegen
 
 # clean rule for target.
@@ -121,12 +121,12 @@ CMakeFiles/AlopexOS.dir/clean:
 CMakeFiles/disk_image.dir/all: CMakeFiles/AlopexOS.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/disk_image.dir/build.make CMakeFiles/disk_image.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/disk_image.dir/build.make CMakeFiles/disk_image.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=7 "Built target disk_image"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=11 "Built target disk_image"
 .PHONY : CMakeFiles/disk_image.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/disk_image.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/fenn/Desktop/AlopexOS/build/CMakeFiles 7
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/fenn/Desktop/AlopexOS/build/CMakeFiles 11
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/disk_image.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/fenn/Desktop/AlopexOS/build/CMakeFiles 0
 .PHONY : CMakeFiles/disk_image.dir/rule
@@ -138,7 +138,7 @@ disk_image: CMakeFiles/disk_image.dir/rule
 # codegen rule for target.
 CMakeFiles/disk_image.dir/codegen: CMakeFiles/AlopexOS.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/disk_image.dir/build.make CMakeFiles/disk_image.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=7 "Finished codegen for target disk_image"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=11 "Finished codegen for target disk_image"
 .PHONY : CMakeFiles/disk_image.dir/codegen
 
 # clean rule for target.
@@ -153,12 +153,12 @@ CMakeFiles/disk_image.dir/clean:
 CMakeFiles/run.dir/all: CMakeFiles/disk_image.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/run.dir/build.make CMakeFiles/run.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/run.dir/build.make CMakeFiles/run.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=8 "Built target run"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=12 "Built target run"
 .PHONY : CMakeFiles/run.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/run.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/fenn/Desktop/AlopexOS/build/CMakeFiles 8
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/fenn/Desktop/AlopexOS/build/CMakeFiles 12
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/run.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/fenn/Desktop/AlopexOS/build/CMakeFiles 0
 .PHONY : CMakeFiles/run.dir/rule
@@ -170,7 +170,7 @@ run: CMakeFiles/run.dir/rule
 # codegen rule for target.
 CMakeFiles/run.dir/codegen: CMakeFiles/disk_image.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/run.dir/build.make CMakeFiles/run.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=8 "Finished codegen for target run"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=12 "Finished codegen for target run"
 .PHONY : CMakeFiles/run.dir/codegen
 
 # clean rule for target.

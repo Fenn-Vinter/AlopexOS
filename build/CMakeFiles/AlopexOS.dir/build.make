@@ -128,9 +128,65 @@ CMakeFiles/AlopexOS.dir/src/kernel/new.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/AlopexOS.dir/src/kernel/new.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fenn/Desktop/AlopexOS/src/kernel/new.cpp -o CMakeFiles/AlopexOS.dir/src/kernel/new.cpp.s
 
+CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.o: CMakeFiles/AlopexOS.dir/flags.make
+CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.o: /home/fenn/Desktop/AlopexOS/src/kernel/cxx_abi.cpp
+CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.o: CMakeFiles/AlopexOS.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.o -MF CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.o.d -o CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.o -c /home/fenn/Desktop/AlopexOS/src/kernel/cxx_abi.cpp
+
+CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fenn/Desktop/AlopexOS/src/kernel/cxx_abi.cpp > CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.i
+
+CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fenn/Desktop/AlopexOS/src/kernel/cxx_abi.cpp -o CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.s
+
+CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.o: CMakeFiles/AlopexOS.dir/flags.make
+CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.o: /home/fenn/Desktop/AlopexOS/src/PCI/pcie.cpp
+CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.o: CMakeFiles/AlopexOS.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.o -MF CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.o.d -o CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.o -c /home/fenn/Desktop/AlopexOS/src/PCI/pcie.cpp
+
+CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fenn/Desktop/AlopexOS/src/PCI/pcie.cpp > CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.i
+
+CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fenn/Desktop/AlopexOS/src/PCI/pcie.cpp -o CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.s
+
+CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.o: CMakeFiles/AlopexOS.dir/flags.make
+CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.o: /home/fenn/Desktop/AlopexOS/src/ACPI/acpi.cpp
+CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.o: CMakeFiles/AlopexOS.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.o -MF CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.o.d -o CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.o -c /home/fenn/Desktop/AlopexOS/src/ACPI/acpi.cpp
+
+CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fenn/Desktop/AlopexOS/src/ACPI/acpi.cpp > CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.i
+
+CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fenn/Desktop/AlopexOS/src/ACPI/acpi.cpp -o CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.s
+
+CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.o: CMakeFiles/AlopexOS.dir/flags.make
+CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.o: /home/fenn/Desktop/AlopexOS/src/ACPI/ecam.cpp
+CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.o: CMakeFiles/AlopexOS.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.o -MF CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.o.d -o CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.o -c /home/fenn/Desktop/AlopexOS/src/ACPI/ecam.cpp
+
+CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/fenn/Desktop/AlopexOS/src/ACPI/ecam.cpp > CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.i
+
+CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/fenn/Desktop/AlopexOS/src/ACPI/ecam.cpp -o CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.s
+
 CMakeFiles/AlopexOS.dir/src/entry.s.o: CMakeFiles/AlopexOS.dir/flags.make
 CMakeFiles/AlopexOS.dir/src/entry.s.o: /home/fenn/Desktop/AlopexOS/src/entry.s
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building ASM object CMakeFiles/AlopexOS.dir/src/entry.s.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building ASM object CMakeFiles/AlopexOS.dir/src/entry.s.o"
 	/usr/bin/c++ $(ASM_DEFINES) $(ASM_INCLUDES) $(ASM_FLAGS) -o CMakeFiles/AlopexOS.dir/src/entry.s.o -c /home/fenn/Desktop/AlopexOS/src/entry.s
 
 CMakeFiles/AlopexOS.dir/src/entry.s.i: cmake_force
@@ -147,6 +203,10 @@ AlopexOS_OBJECTS = \
 "CMakeFiles/AlopexOS.dir/src/kernel/limine_requests.cpp.o" \
 "CMakeFiles/AlopexOS.dir/src/kernel/display.cpp.o" \
 "CMakeFiles/AlopexOS.dir/src/kernel/new.cpp.o" \
+"CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.o" \
+"CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.o" \
+"CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.o" \
+"CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.o" \
 "CMakeFiles/AlopexOS.dir/src/entry.s.o"
 
 # External object files for target AlopexOS
@@ -156,11 +216,15 @@ AlopexOS: CMakeFiles/AlopexOS.dir/src/main.cpp.o
 AlopexOS: CMakeFiles/AlopexOS.dir/src/kernel/limine_requests.cpp.o
 AlopexOS: CMakeFiles/AlopexOS.dir/src/kernel/display.cpp.o
 AlopexOS: CMakeFiles/AlopexOS.dir/src/kernel/new.cpp.o
+AlopexOS: CMakeFiles/AlopexOS.dir/src/kernel/cxx_abi.cpp.o
+AlopexOS: CMakeFiles/AlopexOS.dir/src/PCI/pcie.cpp.o
+AlopexOS: CMakeFiles/AlopexOS.dir/src/ACPI/acpi.cpp.o
+AlopexOS: CMakeFiles/AlopexOS.dir/src/ACPI/ecam.cpp.o
 AlopexOS: CMakeFiles/AlopexOS.dir/src/entry.s.o
 AlopexOS: CMakeFiles/AlopexOS.dir/build.make
 AlopexOS: CMakeFiles/AlopexOS.dir/compiler_depend.ts
 AlopexOS: CMakeFiles/AlopexOS.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX executable AlopexOS"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/fenn/Desktop/AlopexOS/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Linking CXX executable AlopexOS"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/AlopexOS.dir/link.txt --verbose=$(VERBOSE)
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold "Cleaning ELF metadata..."
 	/usr/bin/objcopy --remove-section=.note.gnu.property --remove-section=.comment /home/fenn/Desktop/AlopexOS/build/AlopexOS
