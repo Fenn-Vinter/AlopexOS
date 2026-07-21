@@ -1,0 +1,10 @@
+CompileFlags:
+  Add:
+    - -ffreestanding
+    - -std=c++23
+    - -Iinclude
+    - -Iinclude/limine/
+  Compiler: clang++
+
+Index:
+  Background: Build

@@ -1,0 +1,5 @@
+/home/fenn/Desktop/AlopexOS/build/CMakeFiles/AlopexOS.dir
+/home/fenn/Desktop/AlopexOS/build/CMakeFiles/disk_image.dir
+/home/fenn/Desktop/AlopexOS/build/CMakeFiles/run.dir
+/home/fenn/Desktop/AlopexOS/build/CMakeFiles/edit_cache.dir
+/home/fenn/Desktop/AlopexOS/build/CMakeFiles/rebuild_cache.dir
