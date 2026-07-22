@@ -73,6 +73,11 @@ add_executable(AlopexOS
     src/PCI/pcie.cpp
     src/ACPI/acpi.cpp
     src/ACPI/ecam.cpp
+    src/PCI/nvme/nvme.cpp
+    src/AlopexIBus/AlopexIBus.cpp
+    src/ACPI/mcfg.cpp
+    src/gaossd/gaossd.cpp
+    src/abtrfs/abtrfs.cpp
     src/entry.s
 )
 

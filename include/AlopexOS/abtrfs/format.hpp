@@ -1,7 +1,7 @@
 #if !defined(FORMAT_HPP)
 #define FORMAT_HPP
 
-#include <primetives.h>
+#include <primitives.h>
 
 #if defined(_MSC_VER)
     #define PACKED __pragma(pack(push, 1))
@@ -20,6 +20,16 @@ enum class AbtrfsDiskFlags : u32 {
     ReadOnly = 1 << 2,
     IsFile = 1 << 3
 };
+
+constexpr AbtrfsDiskFlags operator|(AbtrfsDiskFlags a, AbtrfsDiskFlags b) {
+    return static_cast<AbtrfsDiskFlags>(
+        static_cast<u32>(a) | static_cast<u32>(b)
+    );
+}
+
+constexpr bool operator&(AbtrfsDiskFlags a, AbtrfsDiskFlags b) {
+    return (static_cast<u32>(a) & static_cast<u32>(b)) != 0;
+}
 
 PACKED
 struct AbtrFSBaseHeader {

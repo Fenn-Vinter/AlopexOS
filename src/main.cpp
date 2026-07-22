@@ -5,6 +5,12 @@
 #include <arr.hpp>
 #include <AlopexOS/PCI/pcie.hpp>
 #include <AlopexOS/ACPI/acpi.hpp>
+#include <AlopexOS/PCI/nvme/nvme.hpp>
+#include <AlopexOS/ACPI/mcfg.hpp>
+#include <AlopexOS/AlopexIBus/AlopexIBus.hpp>
+#include <AlopexOS/gaossd/gaossd.hpp>
+#include <AlopexOS/abtrfs/abtrfs.hpp>
+#include <AlopexOS/AlopexOS.hpp>
 
 static volatile struct {
     uint64_t id[3];
@@ -14,69 +20,17 @@ __attribute__((used, section(".limine_requests"))) =
     LIMINE_BASE_REVISION(0)
 };
 
-static inline void serial_out(uint16_t port, uint8_t val) {
+static inline auto serial_out(uint16_t port, uint8_t val) -> void {
     asm volatile("outb %0, %1" : : "a"(val), "Nd"(port));
 }
 
-static void serial_print(const char* str) {
+static auto serial_print(const char* str) -> void {
     for (int i = 0; str[i] != '\0'; i++) {
         serial_out(0x3F8, str[i]);
     }
 }
 
-namespace AlopexOS::ACPI {
-    struct SDTHeader {
-        char signature[4];
-        u32 length;
-        u8 revision;
-        u8 checksum;
-        char oem_id[6];
-        char oem_table_id[8];
-        u32 oem_revision;
-        u32 creator_id;
-        u32 creator_revision;
-    } __attribute__((packed));
-
-    struct RSDPDescriptor {
-        char signature[8];
-        u8 checksum;
-        char oem_id[6];
-        u8 revision;
-        u32 rsdt_address;
-    } __attribute__((packed));
-}
-
-namespace {
-    bool is_mcfg_signature(const char* sig) {
-        return sig[0] == 'M' && sig[1] == 'C' && sig[2] == 'F' && sig[3] == 'G';
-    }
-}
-
-const AlopexOS::ACPI::MCFGHeader* locate_acpi_table_mcfg(const AlopexOS::ACPI::SDTHeader* rsdt) {
-    if (!rsdt) {
-        return nullptr;
-    }
-
-    u32 entries = (rsdt->length - sizeof(AlopexOS::ACPI::SDTHeader)) / sizeof(u32);
-    const u32* table_pointers = reinterpret_cast<const u32*>(
-        reinterpret_cast<uptr>(rsdt) + sizeof(AlopexOS::ACPI::SDTHeader)
-    );
-
-    for (u32 i = 0; i < entries; ++i) {
-        auto* header = reinterpret_cast<const AlopexOS::ACPI::SDTHeader*>(
-            static_cast<uptr>(table_pointers[i])
-        );
-
-        if (header && is_mcfg_signature(header->signature)) {
-            return reinterpret_cast<const AlopexOS::ACPI::MCFGHeader*>(header);
-        }
-    }
-
-    return nullptr;
-}
-
-extern "C" void kmain()
-{
+extern "C" auto kmain() -> void {
     serial_print("[KMAIN] Starting AlopexOS kernel initialization...\n");
 
     serial_print("[TEST] Allocating test dynarr...\n");
@@ -98,13 +52,25 @@ extern "C" void kmain()
     uvector2D size = mainScreen->get_screen_size();
     serial_print("[KMAIN] Screen dimensions obtained.\n");
 
+    auto& ibus = AlopexOS::AlopexIBus::get_instance();
+    ibus.scan_all_buses();
+
+    const auto& storage_devices = ibus.get_storage_devices();
+    if (storage_devices.size() == 0) {
+        serial_print("[KMAIN] ERROR: No storage devices detected on bus!\n");
+    } else {
+        for (size_t i = 0; i < storage_devices.size(); i++) {
+            serial_print("[KMAIN] Found storage device index\n");
+        }
+    }
+
     serial_print("[KMAIN] Beginning fade-in loop...\n");
 
-    uint32_t target_r = 0xFE;
-    uint32_t target_g = 0x90;
-    uint32_t target_b = 0x02;
+    uint32_t target_r = 0x02;
+    uint32_t target_g = 0x66;
+    uint32_t target_b = 0x99;
 
-    int steps = 60;
+    int steps = 15;
     for (int step = 0; step <= steps; step++)
     {
         uint32_t r = (target_r * step) / steps;
@@ -127,42 +93,36 @@ extern "C" void kmain()
 
     serial_print("[KMAIN] Fade-in complete.\n");
 
-    const AlopexOS::ACPI::MCFGHeader* mcfg = nullptr;
+    mainScreen->clear(0x001E1E24);
 
-    if (rsdp_request.response != nullptr) {
-        serial_print("[ACPI] Limine RSDP response found.\n");
-        auto* rsdp = reinterpret_cast<const AlopexOS::ACPI::RSDPDescriptor*>(rsdp_request.response->address);
-        if (rsdp) {
-            serial_print("[ACPI] Extracting RSDT base address...\n");
-            auto* rsdt = reinterpret_cast<const AlopexOS::ACPI::SDTHeader*>(static_cast<uptr>(rsdp->rsdt_address));
-            mcfg = locate_acpi_table_mcfg(rsdt);
-            if (mcfg) {
-                serial_print("[ACPI] MCFG table successfully located in RSDT!\n");
-            } else {
-                serial_print("[ACPI] MCFG table not found in RSDT. Defaulting to Port I/O fallback.\n");
-            }
-        }
-    } else {
-        serial_print("[ACPI] Limine RSDP response is null! Defaulting to Port I/O fallback.\n");
-    }
+    [[maybe_unused]] auto& gaossd_inst = AlopexOS::gaossd::get_instance();
 
-    serial_print("[KMAIN] Initializing PCIe Subsystem...\n");
-    auto& pcie = AlopexOS::PCIe::get_instance();
-    pcie.initialize(mcfg);
+    mainScreen->clear(0x00003366);
 
-    if (pcie.is_active()) {
-        serial_print("[KMAIN] PCIe Subsystem active! Searching for NVMe BAR0...\n");
-        uptr nvme_bar0 = pcie.find_nvme_bar0();
-        if (nvme_bar0) {
-            serial_print("[KMAIN] NVMe Controller successfully leached! BAR0 mapped.\n");
+    u64 hhdm = ibus.get_hhdm_offset();
+    AlopexOS::AbtrFS abtrfs_instance;
+    
+    uptr base_addr = 0;
+    auto dev_handle = static_cast<AlopexOS::Handle>(0);
+
+    serial_print("[ABTRFS] Attempting format via AbtrFS context...\n");
+    if (abtrfs_instance.format(base_addr, hhdm, dev_handle)) {
+        serial_print("[ABTRFS] Format command completed successfully!\n");
+        
+        if (abtrfs_instance.mount(base_addr, hhdm, dev_handle)) {
+            serial_print("[KMAIN] AbtrFS formatted and mounted successfully!\n");
+            mainScreen->clear(0x00008040);
+            serial_print("[KMAIN] System initialization completed successfully. Entering idle loop.\n");
         } else {
-            serial_print("[KMAIN] PCIe Subsystem initialized, but no NVMe BAR0 found.\n");
+            serial_print("[KMAIN] ERROR: Mount failed immediately after successful format!\n");
+            mainScreen->clear(0x00800000);
+            serial_print("[KMAIN] System initialization completed with storage errors. Entering idle loop.\n");
         }
     } else {
-        serial_print("[KMAIN] PCIe Subsystem failed to activate.\n");
+        serial_print("[KMAIN] ERROR: Failed to format storage device using AbtrFS context!\n");
+        mainScreen->clear(0x00800000);
+        serial_print("[KMAIN] System initialization completed with storage errors. Entering idle loop.\n");
     }
-
-    mainScreen->clear(0x00FF00FF);
 
     while (true)
     {

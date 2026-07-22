@@ -1,64 +1,141 @@
 #include <AlopexOS/abtrfs/abtrfs.hpp>
+#include <AlopexOS/gaossd/gaossd.hpp>
+
+static inline void serial_out(u16 port, u8 val) {
+    asm volatile("outb %0, %1" : : "a"(val), "Nd"(port));
+}
+
+static void serial_print_abtr(const char* str) {
+    for (int i = 0; str[i] != '\0'; i++) {
+        serial_out(0x3F8, str[i]);
+    }
+}
 
 namespace AlopexOS {
 
-    auto AbtrFS::initialize(DiskDevice* bootDevice) -> AbtrFS& {
-        if (!instance) {
-            static AbtrFS instance_ref(bootDevice);
-            instance = &instance_ref;
-        }
-        return *instance;
-    }
+    auto AbtrFS::mount(uptr base_address, u64 hhdm_offset, Handle device_handle) -> bool {
+        _device_base_address = base_address;
+        _hhdm_offset = hhdm_offset;
+        _device_handle = device_handle;
 
-    auto AbtrFS::get_instance() -> AbtrFS& {
-        return *instance;
-    }
+        serial_print_abtr("[ABTRFS] Attempting mount on device handle...\n");
 
-    AbtrFS::AbtrFS(DiskDevice* bootDevice)
-        : m_main_drive(bootDevice), m_superblock{}, m_cached_root_node(nullptr) {}
+        AlopexOS_REQUEST_storage req{};
+        req.OpCode = AlopexOS_REQUEST_storage::AlopexOS_OPCODE_storage::Read;
+        req.device_handle = _device_handle;
+        req.lba = 0;
+        req.count = 1;
+        req.PhysAddr = reinterpret_cast<PhysicalAddress>(&_partition_header) - _hhdm_offset;
 
-    auto AbtrFS::getRoot() -> AbtrFSNode* {
-        return m_cached_root_node;
-    }
-
-    auto AbtrFS::mount() -> bool {
-        if (!m_main_drive) {
-            return false;
-        }
-
-        u8 superblock_buffer[sizeof(PARTITION_HEADER)];
+        auto& ssd = gaossd::get_instance();
         
-        // Assuming 512-byte hardware sectors; 4096 bytes = 8 sectors per block.
-        constexpr u64 sectors_per_block = 8;
-        
-        // Read partition superblock from block 0 (sector 0)
-        if (!m_main_drive->read_blocks(0, sectors_per_block, superblock_buffer)) {
+        auto sub_res = ssd.submit_request(req);
+        if (sub_res != errorCode::Success) {
+            serial_print_abtr("[ABTRFS] ERROR: submit_request failed!\n");
+            _is_mounted = false;
             return false;
         }
 
-        __builtin_memcpy(&m_superblock, superblock_buffer, sizeof(PARTITION_HEADER));
-
-        // Validate the AbtrFS partition magic signature
-        if (m_superblock.magic != ABTRFS_MAGIC_64) {
+        auto queue_res = ssd.process_queue();
+        if (queue_res != errorCode::Success) {
+            serial_print_abtr("[ABTRFS] ERROR: process_queue failed!\n");
+            _is_mounted = false;
             return false;
         }
 
-        // Static or otherwise persistent block buffer for the cached root node
-        static u8 root_block_buffer[ABTRFS_HEADER_BLOCK_SIZE];
-        
-        u64 root_sector = m_superblock.root_node_block * sectors_per_block;
-        if (!m_main_drive->read_blocks(root_sector, sectors_per_block, root_block_buffer)) {
+        if (!req.completed) {
+            serial_print_abtr("[ABTRFS] ERROR: Request not completed!\n");
+            _is_mounted = false;
             return false;
         }
 
-        m_cached_root_node = reinterpret_cast<AbtrFSNode*>(root_block_buffer);
-
-        // Verify the root node block base header magic
-        if (m_cached_root_node->base.magic != 0xABF5) {
+        if (req.status != errorCode::Success) {
+            serial_print_abtr("[ABTRFS] ERROR: Request completed with error status!\n");
+            _is_mounted = false;
             return false;
         }
 
+        if (_partition_header.magic != ABTRFS_MAGIC_64) {
+            serial_print_abtr("[ABTRFS] ERROR: Invalid magic number found in partition header!\n");
+            _is_mounted = false;
+            return false;
+        }
+
+        serial_print_abtr("[ABTRFS] Successfully mounted!\n");
+        _is_mounted = true;
         return true;
     }
 
+    auto AbtrFS::read_block(u64 block_address, void* buffer) -> bool {
+        if (!_is_mounted) {
+            return false;
+        }
+
+        AlopexOS_REQUEST_storage req{};
+        req.OpCode = AlopexOS_REQUEST_storage::AlopexOS_OPCODE_storage::Read;
+        req.device_handle = _device_handle;
+        req.lba = block_address;
+        req.count = 1;
+        req.PhysAddr = reinterpret_cast<PhysicalAddress>(buffer) - _hhdm_offset;
+
+        auto& ssd = gaossd::get_instance();
+        if (ssd.submit_request(req) != errorCode::Success || ssd.process_queue() != errorCode::Success) {
+            return false;
+        }
+
+        return req.completed && req.status == errorCode::Success;
+    }
+
+    auto AbtrFS::write_block(u64 block_address, const void* buffer) -> bool {
+        if (!_is_mounted) {
+            return false;
+        }
+
+        AlopexOS_REQUEST_storage req{};
+        req.OpCode = AlopexOS_REQUEST_storage::AlopexOS_OPCODE_storage::Write;
+        req.device_handle = _device_handle;
+        req.lba = block_address;
+        req.count = 1;
+        req.PhysAddr = reinterpret_cast<PhysicalAddress>(const_cast<void*>(buffer)) - _hhdm_offset;
+
+        auto& ssd = gaossd::get_instance();
+        if (ssd.submit_request(req) != errorCode::Success || ssd.process_queue() != errorCode::Success) {
+            return false;
+        }
+
+        return req.completed && req.status == errorCode::Success;
+    }
+
+    auto AbtrFS::format(uptr base_address, u64 hhdm_offset, Handle device_handle) -> bool {
+        _device_base_address = base_address;
+        _hhdm_offset = hhdm_offset;
+        _device_handle = device_handle;
+
+        serial_print_abtr("[ABTRFS] Formatting device with valid header...\n");
+
+        _partition_header = PARTITION_HEADER{};
+        _partition_header.magic = ABTRFS_MAGIC_64;
+
+        AlopexOS_REQUEST_storage req{};
+        req.OpCode = AlopexOS_REQUEST_storage::AlopexOS_OPCODE_storage::Write;
+        req.device_handle = _device_handle;
+        req.lba = 0;
+        req.count = 1;
+        req.PhysAddr = reinterpret_cast<PhysicalAddress>(&_partition_header) - _hhdm_offset;
+
+        auto& ssd = gaossd::get_instance();
+        
+        if (ssd.submit_request(req) != errorCode::Success || ssd.process_queue() != errorCode::Success) {
+            serial_print_abtr("[ABTRFS] ERROR: Format write submission failed!\n");
+            return false;
+        }
+
+        if (!req.completed || req.status != errorCode::Success) {
+            serial_print_abtr("[ABTRFS] ERROR: Format write request failed!\n");
+            return false;
+        }
+
+        serial_print_abtr("[ABTRFS] Successfully formatted and wrote partition header!\n");
+        return true;
+    }
 }
