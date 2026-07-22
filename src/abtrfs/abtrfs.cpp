@@ -1,5 +1,6 @@
 #include <AlopexOS/abtrfs/abtrfs.hpp>
 #include <AlopexOS/gaossd/gaossd.hpp>
+#include <AlopexOS/PCI/nvme/nvme.hpp>
 
 static inline void serial_out(u16 port, u8 val) {
     asm volatile("outb %0, %1" : : "a"(val), "Nd"(port));
@@ -25,7 +26,9 @@ namespace AlopexOS {
         req.device_handle = _device_handle;
         req.lba = 0;
         req.count = 1;
-        req.PhysAddr = reinterpret_cast<PhysicalAddress>(&_partition_header) - _hhdm_offset;
+        
+        auto& nvme_ctrl = NVMe::Controller::get_instance();
+        req.PhysAddr = nvme_ctrl.virt_to_phys(&_partition_header);
 
         auto& ssd = gaossd::get_instance();
         
@@ -76,7 +79,9 @@ namespace AlopexOS {
         req.device_handle = _device_handle;
         req.lba = block_address;
         req.count = 1;
-        req.PhysAddr = reinterpret_cast<PhysicalAddress>(buffer) - _hhdm_offset;
+        
+        auto& nvme_ctrl = NVMe::Controller::get_instance();
+        req.PhysAddr = nvme_ctrl.virt_to_phys(buffer);
 
         auto& ssd = gaossd::get_instance();
         if (ssd.submit_request(req) != errorCode::Success || ssd.process_queue() != errorCode::Success) {
@@ -96,7 +101,9 @@ namespace AlopexOS {
         req.device_handle = _device_handle;
         req.lba = block_address;
         req.count = 1;
-        req.PhysAddr = reinterpret_cast<PhysicalAddress>(const_cast<void*>(buffer)) - _hhdm_offset;
+        
+        auto& nvme_ctrl = NVMe::Controller::get_instance();
+        req.PhysAddr = nvme_ctrl.virt_to_phys(const_cast<void*>(buffer));
 
         auto& ssd = gaossd::get_instance();
         if (ssd.submit_request(req) != errorCode::Success || ssd.process_queue() != errorCode::Success) {
@@ -121,7 +128,9 @@ namespace AlopexOS {
         req.device_handle = _device_handle;
         req.lba = 0;
         req.count = 1;
-        req.PhysAddr = reinterpret_cast<PhysicalAddress>(&_partition_header) - _hhdm_offset;
+        
+        auto& nvme_ctrl = NVMe::Controller::get_instance();
+        req.PhysAddr = nvme_ctrl.virt_to_phys(&_partition_header);
 
         auto& ssd = gaossd::get_instance();
         

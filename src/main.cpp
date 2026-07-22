@@ -112,16 +112,62 @@ extern "C" auto kmain() -> void {
         if (abtrfs_instance.mount(base_addr, hhdm, dev_handle)) {
             serial_print("[KMAIN] AbtrFS formatted and mounted successfully!\n");
             mainScreen->clear(0x00008040);
+
+            // --- ABTRFS DATA ROUND-TRIP TEST ---
+            serial_print("[TEST] Starting AbtrFS block read/write round-trip test...\n");
+            
+            u8 write_buffer[512];
+            u8 read_buffer[512];
+
+            // Fill write buffer with a recognizable pattern
+            for (int i = 0; i < 512; i++) {
+                write_buffer[i] = static_cast<u8>(i & 0xFF);
+            }
+            __builtin_memset(read_buffer, 0, sizeof(read_buffer));
+
+            // Use data block 1 (Block 0 holds the partition header)
+            u64 test_data_block = 1;
+
+            serial_print("[TEST] Writing test payload to block 1...\n");
+            if (abtrfs_instance.write_block(test_data_block, write_buffer)) {
+                serial_print("[TEST] Write block 1: SUCCESS\n");
+
+                serial_print("[TEST] Reading back test payload from block 1...\n");
+                if (abtrfs_instance.read_block(test_data_block, read_buffer)) {
+                    serial_print("[TEST] Read block 1: SUCCESS\n");
+
+                    // Verify data integrity
+                    bool data_match = true;
+                    for (int i = 0; i < 512; i++) {
+                        if (write_buffer[i] != read_buffer[i]) {
+                            data_match = false;
+                            break;
+                        }
+                    }
+
+                    if (data_match) {
+                        serial_print("[TEST] DATA INTEGRITY VERIFICATION: PASSED!\n");
+                        mainScreen->clear(0x0000FF00); // Flash Green on complete success
+                    } else {
+                        serial_print("[TEST] ERROR: Data mismatch detected between read and write buffers!\n");
+                        mainScreen->clear(0x00FF0000);
+                    }
+                } else {
+                    serial_print("[TEST] ERROR: Failed to read back block 1!\n");
+                }
+            } else {
+                serial_print("[TEST] ERROR: Failed to write block 1!\n");
+            }
+            // -----------------------------------
+
             serial_print("[KMAIN] System initialization completed successfully. Entering idle loop.\n");
         } else {
             serial_print("[KMAIN] ERROR: Mount failed immediately after successful format!\n");
             mainScreen->clear(0x00800000);
-            serial_print("[KMAIN] System initialization completed with storage errors. Entering idle loop.\n");
         }
     } else {
         serial_print("[KMAIN] ERROR: Failed to format storage device using AbtrFS context!\n");
         mainScreen->clear(0x00800000);
-        serial_print("[KMAIN] System initialization completed with storage errors. Entering idle loop.\n");
     }
 
     while (true)
