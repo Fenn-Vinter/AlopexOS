@@ -56,6 +56,8 @@ public:
     const_pointer begin() const { return data_; }
     const_pointer end() const { return data_ + N; }
 
+    pointer data() { return data_; }
+    const_pointer data() const { return data_; }
 private:
     T data_[N];
 };

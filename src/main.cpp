@@ -3,6 +3,7 @@
 #include <primitives.h>
 #include <AlopexOS/display.hpp>
 #include <arr.hpp>
+#include <string.hpp>
 #include <AlopexOS/PCI/pcie.hpp>
 #include <AlopexOS/ACPI/acpi.hpp>
 #include <AlopexOS/PCI/nvme/nvme.hpp>
@@ -113,52 +114,42 @@ extern "C" auto kmain() -> void {
             serial_print("[KMAIN] AbtrFS formatted and mounted successfully!\n");
             mainScreen->clear(0x00008040);
 
-            // --- ABTRFS DATA ROUND-TRIP TEST ---
-            serial_print("[TEST] Starting AbtrFS block read/write round-trip test...\n");
+            // --- ABTRFS FILE SYSTEM PATH & WRITE TEST ---
+            serial_print("[TEST] Starting AbtrFS file creation & write test for Fox.txt...\n");
             
-            u8 write_buffer[512];
-            u8 read_buffer[512];
-
-            // Fill write buffer with a recognizable pattern
-            for (int i = 0; i < 512; i++) {
-                write_buffer[i] = static_cast<u8>(i & 0xFF);
+            const char* content = "I love Foxes";
+            dynarr<byte> file_data;
+            int len = 0;
+            while (content[len] != '\0') {
+                len++;
             }
-            __builtin_memset(read_buffer, 0, sizeof(read_buffer));
+            
+            file_data.resize(len);
+            for (int i = 0; i < len; i++) {
+                file_data[i] = static_cast<byte>(content[i]);
+            }
 
-            // Use data block 1 (Block 0 holds the partition header)
-            u64 test_data_block = 1;
+            AlopexOS::Path test_path;
+            const char* path_str = "/Fox.txt";
+            int i = 0;
+            for (; path_str[i] != '\0' && i < 2047; i++) {
+                test_path[i] = static_cast<unsigned char>(path_str[i]);
+            }
+            for (; i < 2048; i++) {
+                test_path[i] = 0;
+            }
 
-            serial_print("[TEST] Writing test payload to block 1...\n");
-            if (abtrfs_instance.write_block(test_data_block, write_buffer)) {
-                serial_print("[TEST] Write block 1: SUCCESS\n");
+            serial_print("[TEST] Writing file to path: /Fox.txt...\n");
+            AlopexOS::errorCode err = abtrfs_instance.write_file(test_path, file_data);
 
-                serial_print("[TEST] Reading back test payload from block 1...\n");
-                if (abtrfs_instance.read_block(test_data_block, read_buffer)) {
-                    serial_print("[TEST] Read block 1: SUCCESS\n");
-
-                    // Verify data integrity
-                    bool data_match = true;
-                    for (int i = 0; i < 512; i++) {
-                        if (write_buffer[i] != read_buffer[i]) {
-                            data_match = false;
-                            break;
-                        }
-                    }
-
-                    if (data_match) {
-                        serial_print("[TEST] DATA INTEGRITY VERIFICATION: PASSED!\n");
-                        mainScreen->clear(0x0000FF00); // Flash Green on complete success
-                    } else {
-                        serial_print("[TEST] ERROR: Data mismatch detected between read and write buffers!\n");
-                        mainScreen->clear(0x00FF0000);
-                    }
-                } else {
-                    serial_print("[TEST] ERROR: Failed to read back block 1!\n");
-                }
+            if (err == AlopexOS::errorCode::Success) {
+                serial_print("[TEST] FILE WRITE TEST: PASSED!\n");
+                mainScreen->clear(0x0000FF00); // Flash Green on success
             } else {
-                serial_print("[TEST] ERROR: Failed to write block 1!\n");
+                serial_print("[TEST] ERROR: File write failed with error code!\n");
+                mainScreen->clear(0x00FF0000); // Flash Red on failure
             }
-            // -----------------------------------
+            // -------------------------------------------
 
             serial_print("[KMAIN] System initialization completed successfully. Entering idle loop.\n");
         } else {

@@ -66,10 +66,10 @@ struct AbtrFSDiskHeader {
     char icon[256]{};
     char owner[64]{};
     char group[64]{};
-    u64 size{};
+    u16 size{};
     u64 block_size{ABTRFS_HEADER_BLOCK_SIZE};
     u64 payload_offset{};
-    char reserved[ABTRFS_HEADER_BLOCK_SIZE - sizeof(AbtrFSBaseHeader) - 770]{};
+    char reserved[ABTRFS_HEADER_BLOCK_SIZE - sizeof(AbtrFSBaseHeader) - 764]{};
 } PACKED_END;
 
 static_assert(sizeof(AbtrFSDiskHeader) == ABTRFS_HEADER_BLOCK_SIZE, "AbtrFSDiskHeader must exactly match one 4096-byte block");

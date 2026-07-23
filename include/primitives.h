@@ -41,6 +41,8 @@ using f64 = double;
 using ptr = void*;
 using uptr = unsigned long long;
 
+#define fn auto
+
 #if defined (__SIZE_TYPE__)
 using size_t =__SIZE_TYPE__;
 #else

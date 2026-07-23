@@ -44,7 +44,14 @@ enum class errorCode : u64 {
     NoSpaceLeft         = 403,
     ReadOnlyFilesystem  = 404,
     IsDirectory         = 405,
-    NotDirectory        = 406
+    NotDirectory        = 406,
+    FileNotFound        = 407,
+    FileAlreadyExists   = 408,
+    BufferTooSmall      = 409,
+    DeviceNotMounted    = 410,
+    InvalidPath         = 411,
+    AllocationFailed    = 412,
+    WriteFailed         = 413,
 };
 
 }
