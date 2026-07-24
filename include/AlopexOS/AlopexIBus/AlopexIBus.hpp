@@ -1,7 +1,7 @@
 #if !defined(ALOPEX_IBUS_HPP)
 #define ALOPEX_IBUS_HPP
 
-#include <primitives.h>
+#include <primitives.hpp>
 #include <arr.hpp>
 #include <AlopexOS/AlopexOS.hpp>
 #include <AlopexOS/ACPI/acpi.hpp>

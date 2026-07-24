@@ -1,7 +1,7 @@
 #if !defined(DISPLAY_HPP)
 #define DISPLAY_HPP
 
-#include <primitives.h>
+#include <primitives.hpp>
 #include <arr.hpp>
 #include <limine.h>
 

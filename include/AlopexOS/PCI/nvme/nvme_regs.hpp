@@ -1,7 +1,7 @@
 #if !defined(NVME_REGS_HPP)
 #define NVME_REGS_HPP
 
-#include <primitives.h>
+#include <primitives.hpp>
 
 namespace AlopexOS::NVMe {
 

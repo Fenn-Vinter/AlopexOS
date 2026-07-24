@@ -1,7 +1,7 @@
 #if !defined(ALOPEXOS_ECAM_HPP)
 #define ALOPEXOS_ECAM_HPP
 
-#include <primitives.h>
+#include <primitives.hpp>
 #include "acpi.hpp"
 
 namespace AlopexOS::PCI {

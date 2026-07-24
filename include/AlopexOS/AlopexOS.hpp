@@ -1,6 +1,6 @@
 #include "arr.hpp"
 #include "expected.hpp"
-#include "primitives.h"
+#include "primitives.hpp"
 #if !defined(ALOPEXOS_HPP)
 #define ALOPEXOS_HPP
 
@@ -33,6 +33,13 @@ namespace AlopexOS {
     constexpr Handle InvalidHandle = static_cast<Handle>(-1);
 
     using Path = arr<byte, 2048>;
+
+    extern "C" [[nodiscard]] fn AlopexOS_SysCall(
+        usize syscall_number, 
+        usize arg1, 
+        usize arg2, 
+        usize arg3
+    ) noexcept -> usize;
 }
 
 #endif

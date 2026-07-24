@@ -1,0 +1,5 @@
+"filename", "language", "C++", "comment", "blank", "total"
+"/home/fenn/Desktop/AlopexOS/include/AlopexOS/AVFS/avfs.hpp", "C++", 14, 0, 0, 14
+"/home/fenn/Desktop/AlopexOS/src/AVFS/avfs.hpp", "C++", 0, 0, -1, -1
+"/home/fenn/Desktop/AlopexOS/src/AVFS/drive.cpp", "C++", 36, 0, 9, 45
+"Total", "-", 50, 0, 8, 58

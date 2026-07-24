@@ -1,4 +1,4 @@
-#include "primitives.h"
+#include "primitives.hpp"
 #if !defined(NVME_HPP)
 #define NVME_HPP
 
@@ -9,10 +9,7 @@ namespace AlopexOS::NVMe {
 
 class Controller {
 public:
-    static Controller& get_instance() {
-        static Controller instance;
-        return instance;
-    }
+    static auto get_instance() -> Controller&;
 
     auto init(uptr bar0_physical_address, uptr hhdm_offset) -> bool;
     auto enable() -> bool;

@@ -1,4 +1,3 @@
-#include "primitives.h"
 #include <AlopexOS/display.hpp>
 #include <AlopexOS/limine_requests.hpp>
 #include <new.hpp>

@@ -1,7 +1,7 @@
 #if !defined(ERROR_CODE_HPP)
 #define ERROR_CODE_HPP
 
-#include <primitives.h>
+#include <primitives.hpp>
 
 namespace AlopexOS {
 

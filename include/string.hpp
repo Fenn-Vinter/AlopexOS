@@ -1,7 +1,7 @@
 #if !defined(STRING_HPP)
 #define STRING_HPP
 
-#include <primitives.h>
+#include <primitives.hpp>
 #include <arr.hpp>
 
 namespace AlopexOS {

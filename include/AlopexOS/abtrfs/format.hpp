@@ -1,7 +1,7 @@
 #if !defined(FORMAT_HPP)
 #define FORMAT_HPP
 
-#include <primitives.h>
+#include <primitives.hpp>
 
 #if defined(_MSC_VER)
     #define PACKED __pragma(pack(push, 1))

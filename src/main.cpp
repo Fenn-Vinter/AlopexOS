@@ -1,6 +1,6 @@
 #include <limine/limine.h>
 #include <AlopexOS/limine_requests.hpp>
-#include <primitives.h>
+#include <primitives.hpp>
 #include <AlopexOS/display.hpp>
 #include <arr.hpp>
 #include <string.hpp>
@@ -28,6 +28,22 @@ static inline auto serial_out(uint16_t port, uint8_t val) -> void {
 static auto serial_print(const char* str) -> void {
     for (int i = 0; str[i] != '\0'; i++) {
         serial_out(0x3F8, str[i]);
+    }
+}
+
+static auto serial_print_num(u64 num) -> void {
+    char buf[32];
+    int pos = 0;
+    if (num == 0) {
+        serial_out(0x3F8, '0');
+        return;
+    }
+    while (num > 0) {
+        buf[pos++] = '0' + (num % 10);
+        num /= 10;
+    }
+    for (int i = pos - 1; i >= 0; i--) {
+        serial_out(0x3F8, buf[i]);
     }
 }
 
@@ -144,7 +160,29 @@ extern "C" auto kmain() -> void {
 
             if (err == AlopexOS::errorCode::Success) {
                 serial_print("[TEST] FILE WRITE TEST: PASSED!\n");
-                mainScreen->clear(0x0000FF00); // Flash Green on success
+                
+                serial_print("[TEST] Reading file back from path: /Fox.txt...\n");
+                dynarr<byte> read_data;
+                auto read_res = abtrfs_instance.read_file(test_path, &read_data);
+                if (!read_res.has_value()) {
+                    serial_print("[TEST] ERROR: read_file returned error!\n");
+                    mainScreen->clear(0x00FF0000);
+                } else {
+                    serial_print("[TEST] file_data.size = ");
+                    serial_print_num(file_data.size());
+                    serial_print("\n[TEST] read_data.size = ");
+                    serial_print_num(read_data.size());
+                    serial_print("\n[TEST] read_res.value().size = ");
+                    serial_print_num(read_res.value().size());
+                    serial_print("\n");
+                    if (read_data.size() == file_data.size()) {
+                        serial_print("[TEST] FILE READ TEST: PASSED!\n");
+                        mainScreen->clear(0x0000FF00); // Flash Green on success
+                    } else {
+                        serial_print("[TEST] ERROR: Read size mismatch!\n");
+                        mainScreen->clear(0x00FF0000);
+                    }
+                }
             } else {
                 serial_print("[TEST] ERROR: File write failed with error code!\n");
                 mainScreen->clear(0x00FF0000); // Flash Red on failure

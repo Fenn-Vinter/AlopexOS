@@ -1,7 +1,7 @@
 #if !defined(ALOPEXOS_ACPI_HPP)
 #define ALOPEXOS_ACPI_HPP
 
-#include <primitives.h>
+#include <primitives.hpp>
 
 namespace AlopexOS::ACPI {
 

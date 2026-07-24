@@ -7,9 +7,11 @@ AlopexOS is an advanced, high-performance, proprietary operating system engineer
 ## Table of Contents
 1. [Project Documentation & Governance](#project-documentation--governance)
 2. [What is AlopexOS?](#what-is-alopexos)
-3. [Compilation Instructions](#compilation-instructions)
-4. [Installation Instructions](#installation-instructions)
-5. [Contributors](#contributors)
+3. [Prerequisites & Dependencies](#prerequisites--dependencies)
+4. [Compilation & Build Instructions](#compilation--build-instructions)
+5. [Running via QEMU](#running-via-qemu)
+6. [Installation Instructions](#installation-instructions)
+7. [Contributors](#contributors)
 
 ---
 
@@ -32,32 +34,23 @@ AlopexOS is a closed-source, proprietary operating system project built on stric
 
 ---
 
-## 3. Compilation Instructions
+## 3. Prerequisites & Dependencies
 
-Due to the strict prohibition against third-party tools, external dependency risks, and legacy patterns enforced in [AlopexOSCxxPhilosophy.md](AlopexOSCxxPhilosophy.md), building AlopexOS requires internal or tightly controlled native tooling:
+To build and run AlopexOS from source, your development environment must include the following native tools and dependencies:
 
-* **Prerequisites:** Ensure your environment utilizes a modern C++ compiler enforcing strict modern standards compatible with project guidelines. Standard library headers like `<stdint.h>` or `<cstddef>` are banned in favor of the project-provided `primitives.h`.
-* **Build Sequence:** 
-  1. Verify your build environment relies exclusively on native or approved internal tools (third-party build automation frameworks introducing external version risks are prohibited).
-  2. Compile interface implementations strictly located in `.cpp` files, ensuring no implementation logic resides inside header files.
-  3. Ensure all compilation units adhere to early-failing control flow, the absence of the `else` keyword, and explicit application of the Rule of Five for resource-managing classes.
-
----
-
-## 4. Installation Instructions
-
-* **Consumer Systems:** Individual consumers running approved hardware setups can deploy AlopexOS utilizing native boot media generated through official project distribution channels.
-* **Enterprise & Government Deployments:** Institutional and commercial deployments require verified acquisition of a commercial enterprise license before system integration, as mandated in [LICENSE.md](LICENSE.md).
-* **Storage Configuration:** AlopexOS utilizes its native high-integrity block-level storage filesystem (**AbtrFS**) to manage file structures and data integrity post-installation.
+* **Compiler Toolchain:** A modern Clang environment enforcing strict C++ standards.
+* **Build System:** CMake (compatible with out-of-source builds).
+* **Virtualization & Emulation:** QEMU (`qemu-system-x86_64`) and `qemu-img` for creating disk and NVMe backing images.
+* **Execution Environment:** Python 3 (required to execute the cross-platform `scripts/build_and_run.py` automation script).
 
 ---
 
-## 5. Contributors
+## 4. Compilation & Build Instructions
 
-* **Project Director:** FoxGaming208 (Fenn Vinter)
+AlopexOS utilizes a automated Python build script (`scripts/build_and_run.py`) to handle directory clean-up, CMake configuration, compilation, image validation, and QEMU execution across platforms.
 
-View the complete list of maintainers and developers in [Contributors.md](Contributors.md).
-
----
-
-Copyright © Fenn Vinter / AurenFox.Studio. All Rights Reserved.
+1. Open a terminal in the root directory of the project.
+2. Execute the build script:
+   ```bash
+   python3 scripts/build_and_run.py
+   ```

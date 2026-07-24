@@ -1,5 +1,5 @@
-#if !defined(PRIMETIVES_H)
-#define PRIMETIVES_H
+#if !defined(PRIMETIVES_HPP)
+#define PRIMETIVES_HPP
 
 using i8  = signed char;
 using i16 = signed short int;

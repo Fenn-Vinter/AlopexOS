@@ -61,15 +61,24 @@ static void add_to_free_list(BlockHeader* block) {
     free_list_head = block;
 }
 
+static bool is_in_free_list(BlockHeader* target) {
+    BlockHeader* curr = free_list_head;
+    while (curr) {
+        if (curr == target) return true;
+        curr = curr->next;
+    }
+    return false;
+}
+
 static void coalesce(BlockHeader* block) {
     u8* next_block_addr = reinterpret_cast<u8*>(block) + HEADER_SIZE + block->size;
     u8* heap_end = heap_start + heap_size;
 
-    if (next_block_addr < heap_end) {
+    if (next_block_addr + HEADER_SIZE <= heap_end) {
         BlockHeader* next_block = reinterpret_cast<BlockHeader*>(next_block_addr);
-        if (next_block->is_free) {
-            block->size += HEADER_SIZE + next_block->size;
+        if (next_block->is_free && is_in_free_list(next_block)) {
             remove_from_free_list(next_block);
+            block->size += HEADER_SIZE + next_block->size;
         }
     }
 }

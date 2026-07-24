@@ -1,7 +1,7 @@
 #if !defined(PCI__PCIE_HPP)
 #define PCI__PCIE_HPP
 
-#include <primitives.h>
+#include <primitives.hpp>
 #include <AlopexOS/ACPI/acpi.hpp>
 
 namespace AlopexOS {

@@ -1,7 +1,7 @@
 #if !defined(NEW_HPP)
 #define NEW_HPP
 
-#include <primitives.h>
+#include <primitives.hpp>
 
 void* operator new(size_t size);
 void* operator new[](size_t size);

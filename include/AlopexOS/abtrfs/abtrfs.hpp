@@ -3,7 +3,7 @@
 
 #include "AlopexOS/AlopexOS_ErrorCodes.hpp"
 #include "arr.hpp"
-#include <primitives.h>
+#include <primitives.hpp>
 #include "partition_header.hpp"
 #include <AlopexOS/AlopexOS.hpp>
 #include <expected.hpp>
@@ -37,9 +37,9 @@ public:
     
     fn is_mounted() const -> bool { return _is_mounted; }
 
-    fn write_file(AlopexOS::Path path, dynarr<byte> data) -> AlopexOS::errorCode;
-    fn read_file(AlopexOS::Path path, dynarr<byte>* data = nullptr) -> AurenFox::core::Expected<dynarr<byte>, AlopexOS::errorCode>;
-    fn exists(AlopexOS::Path path) -> AlopexOS::errorCode;
+    fn write_file(const AlopexOS::Path& path, const dynarr<byte>& data) -> AlopexOS::errorCode;
+    fn read_file(const AlopexOS::Path& path, dynarr<byte>* data = nullptr) -> AurenFox::core::Expected<dynarr<byte>, AlopexOS::errorCode>;
+    fn exists(const AlopexOS::Path& path) -> AlopexOS::errorCode;
     
 private:
     bool _is_mounted{false};

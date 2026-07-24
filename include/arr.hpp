@@ -1,7 +1,7 @@
 #if !defined(ARR_HPP)
 #define ARR_HPP
 
-#include <primitives.h>
+#include <primitives.hpp>
 #include <new.hpp>
 
 namespace internal {

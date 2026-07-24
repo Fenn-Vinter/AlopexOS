@@ -28,9 +28,9 @@ struct remove_reference<T&&> {
 template <typename T>
 using remove_reference_t = typename remove_reference<T>::type;
 
-// Custom move semantic primitive
+// Standard library-compliant move implementation using std::remove_reference_t
 template <typename T>
-constexpr fn move(T& arg) noexcept -> remove_reference_t<T>&& {
+constexpr fn move(T&& arg) noexcept -> remove_reference_t<T>&& {
     return static_cast<remove_reference_t<T>&&>(arg);
 }
 

@@ -76,6 +76,11 @@ static auto decode_nvme_status(u16 status_field, const char* context_msg) -> voi
     serial_print_nvme("[NVME] -----------------------------------------\n");
 }
 
+auto AlopexOS::NVMe::Controller::get_instance() -> AlopexOS::NVMe::Controller& {
+    static Controller instance;
+    return instance;
+}
+
 auto AlopexOS::NVMe::Controller::init(uptr bar0_physical_address, uptr hhdm_offset) -> bool {
     if (!bar0_physical_address) {
         serial_print_nvme("[NVME] ERROR: bar0_physical_address is zero!\n");

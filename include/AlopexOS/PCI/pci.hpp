@@ -1,7 +1,7 @@
 #if !defined(ALOPEXOS_PCI_HPP)
 #define ALOPEXOS_PCI_HPP
 
-#include <primitives.h>
+#include <primitives.hpp>
 
 namespace AlopexOS::PCI {
 

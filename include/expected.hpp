@@ -94,6 +94,14 @@ public:
     [[nodiscard]] constexpr fn error() const& -> const Error& {
         return storage_.error;
     }
+
+    constexpr Expected(const Error& err) : has_value_(false) {
+        AurenFox::memory::construct_at(&storage_.error, err);
+    }
+
+    constexpr Expected(Error&& err) noexcept : has_value_(false) {
+        AurenFox::memory::construct_at(&storage_.error, AurenFox::memory::move(err));
+    }
 };
 
 } // namespace AurenFox::core
