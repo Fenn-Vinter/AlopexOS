@@ -77,6 +77,24 @@ AlopexOS::gaossd::gaossd() {
                 storage_dev.submit_fn = nvme_submit_thunk;
                 storage_dev.process_fn = nvme_process_thunk;
 
+                size_t copy_len = sizeof(info.mn);
+                if (copy_len >= sizeof(storage_dev.name)) {
+                    copy_len = sizeof(storage_dev.name) - 1;
+                }
+
+                for (size_t i = 0; i < copy_len; i++) {
+                    storage_dev.name[i] = info.mn[i];
+                }
+                storage_dev.name[copy_len] = '\0';
+
+                for (int i = static_cast<int>(copy_len) - 1; i >= 0; i--) {
+                    if (storage_dev.name[i] == ' ' || storage_dev.name[i] == '\t' || storage_dev.name[i] == '\r' || storage_dev.name[i] == '\n') {
+                        storage_dev.name[i] = '\0';
+                    } else {
+                        break;
+                    }
+                }
+
                 Handle h = 0;
                 register_device(storage_dev, h);
             } else {

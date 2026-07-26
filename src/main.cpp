@@ -1,3 +1,4 @@
+#include "AlopexOS/AlopexOS_ErrorCodes.hpp"
 #include <limine/limine.h>
 #include <AlopexOS/limine_requests.hpp>
 #include <primitives.hpp>
@@ -12,6 +13,8 @@
 #include <AlopexOS/gaossd/gaossd.hpp>
 #include <AlopexOS/abtrfs/abtrfs.hpp>
 #include <AlopexOS/AlopexOS.hpp>
+#include <AlopexOS/AVFS/avfs.hpp>
+#include <SystemXABI/SystemX.hpp>
 
 static volatile struct {
     uint64_t id[3];
@@ -31,7 +34,7 @@ static auto serial_print(const char* str) -> void {
     }
 }
 
-static auto serial_print_num(u64 num) -> void {
+[[maybe_unused]] static auto serial_print_num(u64 num) -> void {
     char buf[32];
     int pos = 0;
     if (num == 0) {
@@ -72,6 +75,8 @@ extern "C" auto kmain() -> void {
     auto& ibus = AlopexOS::AlopexIBus::get_instance();
     ibus.scan_all_buses();
 
+    [[maybe_unused]] auto& gaossd_inst = AlopexOS::gaossd::get_instance();
+
     const auto& storage_devices = ibus.get_storage_devices();
     if (storage_devices.size() == 0) {
         serial_print("[KMAIN] ERROR: No storage devices detected on bus!\n");
@@ -87,7 +92,7 @@ extern "C" auto kmain() -> void {
     uint32_t target_g = 0x66;
     uint32_t target_b = 0x99;
 
-    int steps = 15;
+    int steps = 5;
     for (int step = 0; step <= steps; step++)
     {
         uint32_t r = (target_r * step) / steps;
@@ -111,92 +116,65 @@ extern "C" auto kmain() -> void {
     serial_print("[KMAIN] Fade-in complete.\n");
 
     mainScreen->clear(0x001E1E24);
-
-    [[maybe_unused]] auto& gaossd_inst = AlopexOS::gaossd::get_instance();
-
     mainScreen->clear(0x00003366);
 
     u64 hhdm = ibus.get_hhdm_offset();
     AlopexOS::AbtrFS abtrfs_instance;
     
-    uptr base_addr = 0;
+    uptr base_addr = storage_devices[0].base_address;
     auto dev_handle = static_cast<AlopexOS::Handle>(0);
 
     serial_print("[ABTRFS] Attempting format via AbtrFS context...\n");
     if (abtrfs_instance.format(base_addr, hhdm, dev_handle)) {
         serial_print("[ABTRFS] Format command completed successfully!\n");
-        
-        if (abtrfs_instance.mount(base_addr, hhdm, dev_handle)) {
-            serial_print("[KMAIN] AbtrFS formatted and mounted successfully!\n");
-            mainScreen->clear(0x00008040);
-
-            // --- ABTRFS FILE SYSTEM PATH & WRITE TEST ---
-            serial_print("[TEST] Starting AbtrFS file creation & write test for Fox.txt...\n");
-            
-            const char* content = "I love Foxes";
-            dynarr<byte> file_data;
-            int len = 0;
-            while (content[len] != '\0') {
-                len++;
-            }
-            
-            file_data.resize(len);
-            for (int i = 0; i < len; i++) {
-                file_data[i] = static_cast<byte>(content[i]);
-            }
-
-            AlopexOS::Path test_path;
-            const char* path_str = "/Fox.txt";
-            int i = 0;
-            for (; path_str[i] != '\0' && i < 2047; i++) {
-                test_path[i] = static_cast<unsigned char>(path_str[i]);
-            }
-            for (; i < 2048; i++) {
-                test_path[i] = 0;
-            }
-
-            serial_print("[TEST] Writing file to path: /Fox.txt...\n");
-            AlopexOS::errorCode err = abtrfs_instance.write_file(test_path, file_data);
-
-            if (err == AlopexOS::errorCode::Success) {
-                serial_print("[TEST] FILE WRITE TEST: PASSED!\n");
-                
-                serial_print("[TEST] Reading file back from path: /Fox.txt...\n");
-                dynarr<byte> read_data;
-                auto read_res = abtrfs_instance.read_file(test_path, &read_data);
-                if (!read_res.has_value()) {
-                    serial_print("[TEST] ERROR: read_file returned error!\n");
-                    mainScreen->clear(0x00FF0000);
-                } else {
-                    serial_print("[TEST] file_data.size = ");
-                    serial_print_num(file_data.size());
-                    serial_print("\n[TEST] read_data.size = ");
-                    serial_print_num(read_data.size());
-                    serial_print("\n[TEST] read_res.value().size = ");
-                    serial_print_num(read_res.value().size());
-                    serial_print("\n");
-                    if (read_data.size() == file_data.size()) {
-                        serial_print("[TEST] FILE READ TEST: PASSED!\n");
-                        mainScreen->clear(0x0000FF00); // Flash Green on success
-                    } else {
-                        serial_print("[TEST] ERROR: Read size mismatch!\n");
-                        mainScreen->clear(0x00FF0000);
-                    }
-                }
-            } else {
-                serial_print("[TEST] ERROR: File write failed with error code!\n");
-                mainScreen->clear(0x00FF0000); // Flash Red on failure
-            }
-            // -------------------------------------------
-
-            serial_print("[KMAIN] System initialization completed successfully. Entering idle loop.\n");
-        } else {
-            serial_print("[KMAIN] ERROR: Mount failed immediately after successful format!\n");
-            mainScreen->clear(0x00800000);
-        }
     } else {
         serial_print("[KMAIN] ERROR: Failed to format storage device using AbtrFS context!\n");
         mainScreen->clear(0x00800000);
+    }
+
+    AlopexOS::AVFS avfs{};
+    AlopexOS::errorCode code = avfs.mount("QEMU NVMe Ctrl://");
+    if (code == AlopexOS::errorCode::Success) {
+        mainScreen->clear(0x00FF8800);
+    } else {
+        mainScreen->clear(0x00880000);
+    }
+
+    SystemX systemX{};
+    systemX.attachAVFS(&avfs);
+    //systemX.executeProgram("QEMU NVMe Ctrl://test.vxe");
+
+    dynarr<byte> data = R"(AlopexOS AbtrFS Stress Test Initialization Sequence:
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+[BLOCK START - 0x001] The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs. How vexingly quick daft zebras jump! Sphinx of black quartz, judge my vow. Two driven jocks help fax my big quiz. Quick bazookas gauntlets buckeroos.
+[BLOCK START - 0x002] Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Donec velit neque, auctor sit amet aliquam vel, ullamcorper sit amet ligula. Proin eget tortor risus. Curabitur arcu erat, accumsan id imperdiet et, porttitor at sem. Praesent sapien massa, convallis a pellentesque nec, egestas non nisi. Nulla porttitor accumsan tincidunt.
+[BLOCK START - 0x003] Vivamus suscipit tortor eget felis porttitor volutpat. Curabitur aliquet quam id dui posuere blandit. Nulla quis lorem ut libero malesuada feugiat. Mauris blandit aliquet elit, eget tincidunt nibh pulvinar a. Curabitur non nulla sit amet nisl tempus convallis quis ac lectus.
+[BLOCK START - 0x004] Pellentesque in ipsum id orci porta dapibus. Curabitur non nulla sit amet nisl tempus convallis quis ac lectus. Donec sollicitudin molestie malesuada. Vestibulum ac diam sit amet quam vehicula elementum sed sit amet dui. Proin eget tortor risus.
+[BLOCK START - 0x005] Cras ultricies ligula sed magna dictum porta. Curabitur arcu erat, accumsan id imperdiet et, porttitor at sem. Nulla quis lorem ut libero malesuada feugiat. Mauris blandit aliquet elit, eget tincidunt nibh pulvinar a. Donec sollicitudin molestie malesuada.
+[BLOCK START - 0x006] Integer sollicitudin ligula sed magna dictum porta. Curabitur arcu erat, accumsan id imperdiet et, porttitor at sem. Nulla quis lorem ut libero malesuada feugiat. Mauris blandit aliquet elit, eget tincidunt nibh pulvinar a. Donec sollicitudin molestie malesuada.
+[BLOCK START - 0x007] Mauris blandit aliquet elit, eget tincidunt nibh pulvinar a. Curabitur non nulla sit amet nisl tempus convallis quis ac lectus. Donec sollicitudin molestie malesuada. Vestibulum ac diam sit amet quam vehicula elementum sed sit amet dui. Proin eget tortor risus.
+[BLOCK START - 0x008] Curabitur non nulla sit amet nisl tempus convallis quis ac lectus. Vivamus suscipit tortor eget felis porttitor volutpat. Curabitur aliquet quam id dui posuere blandit. Nulla quis lorem ut libero malesuada feugiat.
+[BLOCK START - 0x009] Donec sollicitudin molestie malesuada. Vestibulum ac diam sit amet quam vehicula elementum sed sit amet dui. Proin eget tortor risus. Cras ultricies ligula sed magna dictum porta. Curabitur arcu erat, accumsan id imperdiet et, porttitor at sem.
+[BLOCK START - 0x010] Sed porttitor lectus nibh. Curabitur aliquet quam id dui posuere blandit. Vestibulum ac diam sit amet quam vehicula elementum sed sit amet dui. Curabitur non nulla sit amet nisl tempus convallis quis ac lectus.
+[BLOCK START - 0x011] Nulla quis lorem ut libero malesuada feugiat. Curabitur arcu erat, accumsan id imperdiet et, porttitor at sem. Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus. Mauris blandit aliquet elit, eget tincidunt nibh pulvinar a.
+[BLOCK START - 0x012] Vestibulum ac diam sit amet quam vehicula elementum sed sit amet dui. Nulla porttitor accumsan tincidunt. Quisque velit nisi, pretium ut lacinia in, elementum id enim. Curabitur aliquet quam id dui posuere blandit.
+[BLOCK START - 0x013] Praesent sapien massa, convallis a pellentesque nec, egestas non nisi. Curabitur aliquet quam id dui posuere blandit. Vestibulum ac diam sit amet quam vehicula elementum sed sit amet dui. Donec sollicitudin molestie malesuada.
+[BLOCK START - 0x014] Curabitur aliquet quam id dui posuere blandit. Nulla quis lorem ut libero malesuada feugiat. Mauris blandit aliquet elit, eget tincidunt nibh pulvinar a. Curabitur non nulla sit amet nisl tempus convallis quis ac lectus.
+[BLOCK START - 0x015] Proin eget tortor risus. Curabitur arcu erat, accumsan id imperdiet et, porttitor at sem. Praesent sapien massa, convallis a pellentesque nec, egestas non nisi. Nulla porttitor accumsan tincidunt.
+[BLOCK START - 0x016] Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus. Nulla porttitor accumsan tincidunt. Quisque velit nisi, pretium ut lacinia in, elementum id enim. Curabitur aliquet quam id dui posuere blandit.
+[BLOCK START - 0x017] Quisque velit nisi, pretium ut lacinia in, elementum id enim. Curabitur arcu erat, accumsan id imperdiet et, porttitor at sem. Praesent sapien massa, convallis a pellentesque nec, egestas non nisi. Nulla porttitor accumsan tincidunt.
+[BLOCK START - 0x018] Donec rutrum congue leo eget malesuada. Curabitur arcu erat, accumsan id imperdiet et, porttitor at sem. Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus. Mauris blandit aliquet elit, eget tincidunt nibh pulvinar a.
+[BLOCK START - 0x019] Cursus euismod quis viverra nibh cras pulvinar mattis nunc sed. Eget magna fermentum iaculis eu non diam phasellus vestibulum lorem. Urna molestie at elementum eu facilisis sed odio morbi. Sed vulputate mi sit amet mauris commodo.
+[BLOCK START - 0x020] Ultrices eros in cursus turpis massa tincidunt dui ut ornare. Eget nullam non nisi est sit amet facilisis magna. Consequat ac felis donec et odio pellentesque diam volutpat commodo. Amet consectetur adipiscing elit pellentesque habitant morbi tristique senectus.
+[END OF STRESS TEST PAYLOAD - AlopexOS AbtrFS Fully Verified])";
+
+    AlopexOS::errorCode write_code = avfs.write("QEMU NVMe Ctrl://Fabian.txt", data);
+    if (write_code == AlopexOS::errorCode::Success) {
+        serial_print("[KMAIN] Write succeeded!\n");
+    } else {
+        serial_print("[KMAIN] ERROR: Write failed with error code: ");
+        serial_print(AlopexOS::returnErrorAsCstring(write_code));
+        serial_print("\n");
     }
 
     while (true)
@@ -204,3 +182,21 @@ extern "C" auto kmain() -> void {
         asm volatile("hlt");
     }
 }
+
+
+/*
+
+dynarr<byte> data2 = R"(AlopexOS AbtrFS Secondary File Validation:
+This is a second test file written immediately after the stress test payload.
+Testing directory listing allocation, multi-file inode handling, and sector offset tracking.)";
+
+    AlopexOS::errorCode write_code2 = avfs.write("QEMU NVMe Ctrl://SecondFile.txt", data2);
+    if (write_code2 == AlopexOS::errorCode::Success) {
+        serial_print("[KMAIN] Second write (SecondFile.txt) succeeded!\n");
+    } else {
+        serial_print("[KMAIN] ERROR: Second write failed with error code: ");
+        serial_print(AlopexOS::returnErrorAsCstring(write_code2));
+        serial_print("\n");
+    }
+
+*/

@@ -23,58 +23,34 @@ fn AlopexOS::AbtrFS::mount(uptr base_address, u64 hhdm_offset, Handle device_han
     _hhdm_offset = hhdm_offset;
     _device_handle = device_handle;
 
-    serial_print_abtr("[ABTRFS] Attempting mount on device handle...\n");
-
-    AlopexOS_REQUEST_storage req{};
-    req.OpCode = AlopexOS_REQUEST_storage::AlopexOS_OPCODE_storage::Read;
-    req.device_handle = _device_handle;
-    req.lba = 0;
-    req.count = 8; // 4096 bytes / 512 bytes per sector = 8 sectors
-        
-    auto& nvme_ctrl = NVMe::Controller::get_instance();
-    req.PhysAddr = nvme_ctrl.virt_to_phys(&_partition_header);
-
-    auto& ssd = gaossd::get_instance();
-    
-    auto sub_res = ssd.submit_request(req);
-    if (sub_res != errorCode::Success) {
-        serial_print_abtr("[ABTRFS] ERROR: submit_request failed!\n");
+    if (!read_block(0, &_partition_header)) {
         _is_mounted = false;
         return false;
     }
 
-    auto queue_res = ssd.process_queue();
-    if (queue_res != errorCode::Success) {
-        serial_print_abtr("[ABTRFS] ERROR: process_queue failed!\n");
+    if (_partition_header.magic != 0xABF4) {
         _is_mounted = false;
         return false;
     }
 
-    if (!req.completed) {
-        serial_print_abtr("[ABTRFS] ERROR: Request not completed!\n");
-        _is_mounted = false;
-        return false;
-    }
-
-    if (req.status != errorCode::Success) {
-        serial_print_abtr("[ABTRFS] ERROR: Request completed with error status!\n");
-        _is_mounted = false;
-        return false;
-    }
-
-    if (_partition_header.magic != ABTRFS_MAGIC_64) {
-        serial_print_abtr("[ABTRFS] ERROR: Invalid magic number found in partition header!\n");
-        _is_mounted = false;
-        return false;
-    }
-
-    serial_print_abtr("[ABTRFS] Successfully mounted!\n");
     _is_mounted = true;
     return true;
 }
 
+fn AlopexOS::AbtrFS::mount_existing(uptr base_address, u64 hhdm_offset, Handle device_handle) -> void {
+    _device_base_address = base_address;
+    _hhdm_offset = hhdm_offset;
+    _device_handle = device_handle;
+    
+    if (read_block(0, &_partition_header)) {
+        if (_partition_header.magic == 0xABF4) {
+            _is_mounted = true;
+        }
+    }
+}
+
 fn AlopexOS::AbtrFS::read_block(u64 block_address, void* buffer) -> bool {
-    if (!_is_mounted) {
+    if (_device_handle == InvalidHandle) {
         return false;
     }
 
@@ -96,7 +72,7 @@ fn AlopexOS::AbtrFS::read_block(u64 block_address, void* buffer) -> bool {
 }
 
 fn AlopexOS::AbtrFS::write_block(u64 block_address, const void* buffer) -> bool {
-    if (!_is_mounted) {
+    if (_device_handle == InvalidHandle) {
         return false;
     }
 
@@ -117,41 +93,24 @@ fn AlopexOS::AbtrFS::write_block(u64 block_address, const void* buffer) -> bool 
     return req.completed && req.status == errorCode::Success;
 }
 
-fn AlopexOS::AbtrFS::format(uptr base_address, u64 hhdm_offset, Handle device_handle) -> bool {
+fn AlopexOS::AbtrFS::format(const uptr& base_address, const u64& hhdm_offset, const Handle& device_handle) -> bool {
     _device_base_address = base_address;
     _hhdm_offset = hhdm_offset;
     _device_handle = device_handle;
 
-    serial_print_abtr("[ABTRFS] Formatting device with valid header...\n");
+    PARTITION_HEADER header{};
+    header.magic = 0xABF4;
+    header.total_blocks = 204800; // Default partition size bounds
+    header.free_blocks_count = header.total_blocks - 1;
+    header.block_size = ABTRFS_HEADER_BLOCK_SIZE;
 
-    _partition_header = PARTITION_HEADER{};
-    _partition_header.magic = ABTRFS_MAGIC_64;
-    _partition_header.total_blocks = 16384;
-    _partition_header.free_blocks_count = _partition_header.total_blocks - 1;
-    _partition_header.root_node_block = 0;
+    _partition_header = header;
 
-    AlopexOS_REQUEST_storage req{};
-    req.OpCode = AlopexOS_REQUEST_storage::AlopexOS_OPCODE_storage::Write;
-    req.device_handle = _device_handle;
-    req.lba = 0;
-    req.count = 8; // 8 sectors for the 4096-byte partition header block
-        
-    auto& nvme_ctrl = NVMe::Controller::get_instance();
-    req.PhysAddr = nvme_ctrl.virt_to_phys(&_partition_header);
-
-    auto& ssd = gaossd::get_instance();
-        
-    if (ssd.submit_request(req) != errorCode::Success || ssd.process_queue() != errorCode::Success) {
-        serial_print_abtr("[ABTRFS] ERROR: Format write submission failed!\n");
+    if (!write_block(0, &header)) {
         return false;
     }
 
-    if (!req.completed || req.status != errorCode::Success) {
-        serial_print_abtr("[ABTRFS] ERROR: Format write request failed!\n");
-        return false;
-    }
-
-    serial_print_abtr("[ABTRFS] Successfully formatted and wrote partition header!\n");
+    _is_mounted = true;
     return true;
 }
 
@@ -202,83 +161,6 @@ static fn find_or_create_node(TreeNode*& root, const dynarr<AlopexOS::string>& s
     }
 }
 
-fn AlopexOS::AbtrFS::write_file(const AlopexOS::Path& path, const dynarr<byte>& data) -> AlopexOS::errorCode {
-    if (!_is_mounted) return AlopexOS::errorCode::DeviceNotMounted;
-
-    auto choppedPath = chopPath(path);
-    if (!choppedPath.has_value()) return choppedPath.error();
-
-    const auto& segments = choppedPath.value();
-    if (segments.size() == 0) return AlopexOS::errorCode::InvalidPath;
-
-    auto target_node = find_or_create_node(_root_node, segments, 0);
-    if (!target_node.has_value()) {
-        return AlopexOS::errorCode::AllocationFailed;
-    }
-
-    u64 data_blocks_count = (data.size() + ABTRFS_HEADER_BLOCK_SIZE - 1) / ABTRFS_HEADER_BLOCK_SIZE;
-    if (data_blocks_count == 0) {
-        data_blocks_count = 1; 
-    }
-
-    AbtrFSDiskHeader* file_header = new AbtrFSDiskHeader{};
-    file_header->base.magic = 0xABF5;
-    file_header->base.flags = AbtrfsDiskFlags::IsFile;
-    
-    file_header->section_count = data_blocks_count;
-    u64 remainder = data.size() % ABTRFS_HEADER_BLOCK_SIZE;
-    file_header->size = static_cast<u16>(remainder == 0 && data.size() > 0 ? ABTRFS_HEADER_BLOCK_SIZE : remainder);
-    
-    file_header->block_size = ABTRFS_HEADER_BLOCK_SIZE;
-
-    int p_idx = 0;
-    for (int i = 0; i < 2048 && path[i] != '\0' && p_idx < 255; i++) {
-        file_header->path[p_idx++] = static_cast<char>(path[i]);
-    }
-    file_header->path[p_idx] = '\0';
-
-    u64 assigned_header_block = _partition_header.total_blocks - _partition_header.free_blocks_count;
-    if (_partition_header.free_blocks_count < (1 + data_blocks_count)) {
-        delete file_header;
-        return AlopexOS::errorCode::NoSpaceLeft;
-    }
-
-    _partition_header.free_blocks_count -= (1 + data_blocks_count);
-    file_header->payload_offset = assigned_header_block + 1;
-
-    if (!write_block(assigned_header_block, file_header)) {
-        delete file_header;
-        return AlopexOS::errorCode::WriteFailed;
-    }
-
-    u64 payload_offset = file_header->payload_offset;
-    delete file_header;
-
-    dynarr<byte> block_buffer;
-    block_buffer.resize(ABTRFS_HEADER_BLOCK_SIZE);
-
-    for (u64 b = 0; b < data_blocks_count; b++) {
-        for (u64 k = 0; k < ABTRFS_HEADER_BLOCK_SIZE; k++) {
-            block_buffer[k] = 0;
-        }
-
-        u64 chunk_offset = b * ABTRFS_HEADER_BLOCK_SIZE;
-        for (u64 k = 0; k < ABTRFS_HEADER_BLOCK_SIZE && (chunk_offset + k) < data.size(); k++) {
-            block_buffer[k] = data[chunk_offset + k];
-        }
-
-        if (!write_block(payload_offset + b, block_buffer.data())) {
-            return AlopexOS::errorCode::WriteFailed;
-        }
-    }
-
-    if (!write_block(0, &_partition_header)) {
-        return AlopexOS::errorCode::WriteFailed;
-    }
-
-    return AlopexOS::errorCode::Success;
-}
-
 static fn is_path_equal(const AlopexOS::Path& path, const char* header_path) -> bool {
     for (int i = 0; i < 255 && i < 2048; i++) {
         char c1 = static_cast<char>(path[i]);
@@ -316,6 +198,119 @@ static fn find_file_header(AlopexOS::AbtrFS* fs, u64 total_blocks, u64 free_bloc
     return false;
 }
 
+fn AlopexOS::AbtrFS::write_file(const AlopexOS::Path& path, const dynarr<byte>& data, u64 write_offset) -> AlopexOS::errorCode {
+    if (!_is_mounted) return AlopexOS::errorCode::DeviceNotMounted;
+
+    auto choppedPath = chopPath(path);
+    if (!choppedPath.has_value()) return choppedPath.error();
+
+    const auto& segments = choppedPath.value();
+    if (segments.size() == 0) return AlopexOS::errorCode::InvalidPath;
+
+    auto target_node = find_or_create_node(_root_node, segments, 0);
+    if (!target_node.has_value()) {
+        return AlopexOS::errorCode::AllocationFailed;
+    }
+
+    AbtrFSDiskHeader file_header{};
+    bool file_exists = find_file_header(this, _partition_header.total_blocks, _partition_header.free_blocks_count, path, file_header);
+
+    u64 existing_total_size = 0;
+    if (file_exists) {
+        if (file_header.section_count > 0) {
+            existing_total_size = (file_header.section_count - 1) * ABTRFS_HEADER_BLOCK_SIZE + file_header.size;
+        }
+    }
+
+    u64 target_end_size = write_offset + data.size();
+    u64 final_size = (target_end_size > existing_total_size) ? target_end_size : existing_total_size;
+    if (final_size == 0) return AlopexOS::errorCode::InvalidParameters;
+
+    u64 required_blocks = (final_size + ABTRFS_HEADER_BLOCK_SIZE - 1) / ABTRFS_HEADER_BLOCK_SIZE;
+
+    dynarr<byte> expanded_data{};
+    expanded_data.resize(final_size);
+
+    if (file_exists) {
+        auto old_content = read_file(path, nullptr, 0, 0);
+        if (old_content.has_value()) {
+            const auto& old_bytes = old_content.value();
+            for (u64 i = 0; i < old_bytes.size() && i < final_size; i++) {
+                expanded_data[i] = old_bytes[i];
+            }
+        }
+    }
+
+    for (u64 i = 0; i < data.size(); i++) {
+        expanded_data[write_offset + i] = data[i];
+    }
+
+    u64 data_blocks_count = required_blocks;
+    u64 assigned_header_block = _partition_header.total_blocks - _partition_header.free_blocks_count;
+
+    if (!file_exists) {
+        if (_partition_header.free_blocks_count < (1 + data_blocks_count) || 
+            (assigned_header_block + 1 + data_blocks_count) > _partition_header.total_blocks) {
+            return AlopexOS::errorCode::NoSpaceLeft;
+        }
+        _partition_header.free_blocks_count -= (1 + data_blocks_count);
+        file_header.payload_offset = assigned_header_block + 1;
+    } else {
+        if (data_blocks_count > file_header.section_count) {
+            u64 extra_blocks_needed = data_blocks_count - file_header.section_count;
+            if (_partition_header.free_blocks_count < extra_blocks_needed) {
+                return AlopexOS::errorCode::NoSpaceLeft;
+            }
+            _partition_header.free_blocks_count -= extra_blocks_needed;
+        }
+    }
+
+    file_header.base.magic = 0xABF5;
+    file_header.base.flags = AbtrfsDiskFlags::IsFile;
+    file_header.section_count = data_blocks_count;
+    
+    u64 remainder = final_size % ABTRFS_HEADER_BLOCK_SIZE;
+    file_header.size = static_cast<u16>(remainder == 0 ? ABTRFS_HEADER_BLOCK_SIZE : remainder);
+    file_header.block_size = ABTRFS_HEADER_BLOCK_SIZE;
+
+    int p_idx = 0;
+    for (int i = 0; i < 2048 && path[i] != '\0' && p_idx < 255; i++) {
+        file_header.path[p_idx++] = static_cast<char>(path[i]);
+    }
+    file_header.path[p_idx] = '\0';
+
+    if (!file_exists) {
+        if (!write_block(assigned_header_block, &file_header)) {
+            return AlopexOS::errorCode::WriteFailed;
+        }
+    }
+
+    u64 payload_offset = file_header.payload_offset;
+    byte block_buffer[ABTRFS_HEADER_BLOCK_SIZE];
+    const byte* raw_data_ptr = expanded_data.data();
+
+    for (u64 b = 0; b < data_blocks_count; b++) {
+        for (u64 k = 0; k < ABTRFS_HEADER_BLOCK_SIZE; k++) {
+            block_buffer[k] = 0;
+        }
+
+        u64 chunk_offset = b * ABTRFS_HEADER_BLOCK_SIZE;
+        for (u64 k = 0; k < ABTRFS_HEADER_BLOCK_SIZE && (chunk_offset + k) < final_size; k++) {
+            block_buffer[k] = raw_data_ptr[chunk_offset + k];
+        }
+
+        if (!write_block(payload_offset + b, block_buffer)) {
+            return AlopexOS::errorCode::WriteFailed;
+        }
+    }
+
+    if (!write_block(0, &_partition_header)) {
+        return AlopexOS::errorCode::WriteFailed;
+    }
+
+    return AlopexOS::errorCode::Success;
+}
+
 fn AlopexOS::AbtrFS::exists(const AlopexOS::Path& path) -> AlopexOS::errorCode {
     if (!_is_mounted) return AlopexOS::errorCode::DeviceNotMounted;
 
@@ -333,7 +328,7 @@ fn AlopexOS::AbtrFS::exists(const AlopexOS::Path& path) -> AlopexOS::errorCode {
     return AlopexOS::errorCode::Success;
 }
 
-fn AlopexOS::AbtrFS::read_file(const AlopexOS::Path& path, dynarr<byte>* data) -> AurenFox::core::Expected<dynarr<byte>, AlopexOS::errorCode> {
+fn AlopexOS::AbtrFS::read_file(const AlopexOS::Path& path, dynarr<byte>* data, u64 read_offset, u64 max_read_size) -> AurenFox::core::Expected<dynarr<byte>, AlopexOS::errorCode> {
     if (!_is_mounted) return AlopexOS::errorCode::DeviceNotMounted;
 
     auto choppedPath = chopPath(path);
@@ -355,55 +350,45 @@ fn AlopexOS::AbtrFS::read_file(const AlopexOS::Path& path, dynarr<byte>* data) -
         total_size = (data_blocks_count - 1) * ABTRFS_HEADER_BLOCK_SIZE + file_header->size;
     }
     u64 payload_offset = file_header->payload_offset;
-    
-    serial_print_abtr("[ABTRFS] read_file: section_count=");
-    char num_buf[32];
-    int npos = 0;
-    u64 tmp = data_blocks_count;
-    if (tmp == 0) serial_print_abtr("0");
-    while (tmp > 0) { num_buf[npos++] = '0' + (tmp % 10); tmp /= 10; }
-    for (int i = npos - 1; i >= 0; i--) serial_out(0x3F8, num_buf[i]);
-    serial_print_abtr(", size=");
-    npos = 0; tmp = file_header->size;
-    if (tmp == 0) serial_print_abtr("0");
-    while (tmp > 0) { num_buf[npos++] = '0' + (tmp % 10); tmp /= 10; }
-    for (int i = npos - 1; i >= 0; i--) serial_out(0x3F8, num_buf[i]);
-    serial_print_abtr(", payload_offset=");
-    npos = 0; tmp = payload_offset;
-    if (tmp == 0) serial_print_abtr("0");
-    while (tmp > 0) { num_buf[npos++] = '0' + (tmp % 10); tmp /= 10; }
-    for (int i = npos - 1; i >= 0; i--) serial_out(0x3F8, num_buf[i]);
-    serial_print_abtr("\n");
-
     delete file_header;
+
+    if (read_offset >= total_size) {
+        dynarr<byte> empty_result{};
+        if (data) *data = empty_result;
+        return AurenFox::core::Expected<dynarr<byte>, AlopexOS::errorCode>(empty_result);
+    }
+
+    u64 available_size = total_size - read_offset;
+    u64 bytes_to_read = available_size;
+    
+    if (max_read_size > 0 && max_read_size < available_size) {
+        bytes_to_read = max_read_size;
+    }
 
     dynarr<byte> local_buffer;
     dynarr<byte>* target_data = data;
     if (!target_data) {
         target_data = &local_buffer;
     }
-    target_data->resize(total_size);
+    target_data->resize(bytes_to_read);
 
     dynarr<byte> block_buffer;
     block_buffer.resize(ABTRFS_HEADER_BLOCK_SIZE);
 
-    u64 bytes_read = 0;
-    for (u64 b = 0; b < data_blocks_count; b++) {
+    u64 start_block = read_offset / ABTRFS_HEADER_BLOCK_SIZE;
+    u64 block_offset_shift = read_offset % ABTRFS_HEADER_BLOCK_SIZE;
+
+    u64 bytes_copied = 0;
+    for (u64 b = start_block; b < data_blocks_count && bytes_copied < bytes_to_read; b++) {
         u64 block_num = payload_offset + b;
         if (!read_block(block_num, block_buffer.data())) {
             return AlopexOS::errorCode::IOError;
         }
 
-        u64 to_copy = ABTRFS_HEADER_BLOCK_SIZE;
-        if (bytes_read + to_copy > total_size) {
-            to_copy = total_size - bytes_read;
+        u64 k_start = (b == start_block) ? block_offset_shift : 0;
+        for (u64 k = k_start; k < ABTRFS_HEADER_BLOCK_SIZE && bytes_copied < bytes_to_read; k++) {
+            (*target_data)[bytes_copied++] = block_buffer[k];
         }
-
-        for (u64 k = 0; k < to_copy; k++) {
-            (*target_data)[bytes_read + k] = block_buffer[k];
-        }
-
-        bytes_read += to_copy;
     }
 
     return AurenFox::core::Expected<dynarr<byte>, AlopexOS::errorCode>(*target_data);

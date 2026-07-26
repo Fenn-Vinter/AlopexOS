@@ -54,6 +54,8 @@ enum class errorCode : u64 {
     WriteFailed         = 413,
 };
 
+fn returnErrorAsCstring(errorCode err) -> const char*;
+
 }
 
 #endif

@@ -1,4 +1,5 @@
 #include "AlopexOS/AlopexOS_ErrorCodes.hpp"
+#include "AlopexOS/gaossd/gaossd.hpp"
 #if !defined (ALOPEXOS_VIRTUAL_FILE_SYSTEM)
 #define ALOPEXOS_VIRTUAL_FILE_SYSTEM
 
@@ -12,10 +13,26 @@ namespace AlopexOS {
 }
 
 class AlopexOS::AVFS {
+    class drive;
+    dynarr<drive> drives{};
+
+    u64 hhdm{};
+    
+    fn findDrive(const Path& path) -> AurenFox::core::Expected<string16, errorCode>;
+    fn retrieveDrive(const string16& drive) -> AurenFox::core::Expected<uptr, errorCode>;
+    fn findPathAfterDrive(const Path& path) -> AurenFox::core::Expected<Path, errorCode>;
+
     public:
-    private:
-        class drive;
-        dynarr<drive> drives;
+        AVFS();
+        ~AVFS() = default;
+        gaossd* GAOSSD = nullptr;
+
+        fn mount(const Path& path) -> errorCode;
+        fn dismount(const Path& path) -> errorCode;
+
+        fn write(const Path& path, const dynarr<byte>& data) -> errorCode;
+        fn read(const Path& path, const dynarr<byte>& data) -> errorCode;
+        fn exists(const Path& path) -> errorCode;
 };
 
 class AlopexOS::AVFS::drive {
@@ -23,27 +40,27 @@ class AlopexOS::AVFS::drive {
         fn BaseAdress_Get() -> uptr*;
         fn BaseAdress_Get(uptr* base_address) -> uptr*;
         fn BaseAdress_Cpy() -> uptr;
-        fn BaseAdress_Set(const uptr& base_address) -> AlopexOS::errorCode;
+        fn BaseAdress_Set(const uptr& base_address) -> errorCode;
 
         fn HHDMOffset_Get() -> u64*;
         fn HHDMOffset_Get(u64* hddm_offset) -> u64*;
         fn HHDMOffset_Cpy() -> u64;
-        fn HHDMOffset_Set(const u64& hddm_offset) -> AlopexOS::errorCode;
+        fn HHDMOffset_Set(const u64& hddm_offset) -> errorCode;
 
         fn DeviceHandle_Get() -> u64*;
         fn DeviceHandle_Get(u64* device_handle) -> u64*;
         fn DeviceHandle_Cpy() -> u64;
-        fn DeviceHandle_Set(const u64& device_handle) -> AlopexOS::errorCode;
+        fn DeviceHandle_Set(const u64& device_handle) -> errorCode;
 
         fn Name_Get() -> string*;
         fn Name_Get(string* name) -> string*;
         fn Name_Cpy() -> string;
-        fn Name_Set(const string& name) -> AlopexOS::errorCode;
+        fn Name_Set(const string& name) -> errorCode;
 
         fn Format_Get() -> string8*;
         fn Format_Get(string8* format) -> string8*;
         fn Format_Cpy() -> string8;
-        fn Format_Set(const string8& format) -> AlopexOS::errorCode;
+        fn Format_Set(const string8& format) -> errorCode;
     private:
         uptr base_address{};
         u64 hhdm_offset{};

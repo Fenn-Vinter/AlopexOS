@@ -4,7 +4,9 @@ CompileFlags:
     - -std=c++23
     - -Iinclude
     - -Iinclude/limine/
-  Compiler: clang++
+    - -D__CURRENT_ARCH__="X86_64"
+    - -D__CURRENT_OS__="AlopexOS"
+Compiler: clang++
 
 Index:
   Background: Build

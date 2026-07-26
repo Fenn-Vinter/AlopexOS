@@ -78,6 +78,10 @@ add_executable(AlopexOS
     src/ACPI/mcfg.cpp
     src/gaossd/gaossd.cpp
     src/abtrfs/abtrfs.cpp
+    src/AVFS/avfs.cpp
+    src/AVFS/drive.cpp
+    src/AlopexOS_ErrorCodes.cpp
+    src/SystemX/AlopexOS/SystemX.cpp
     src/entry.s
 )
 
@@ -93,6 +97,15 @@ target_include_directories(AlopexOS PRIVATE
 
 target_compile_options(AlopexOS PRIVATE
     ${KERNEL_FLAGS}
+)
+
+# --------------------------------------------------
+# Preprocessor Definitions
+# --------------------------------------------------
+
+target_compile_definitions(AlopexOS PRIVATE
+    __CURRENT_ARCH__="X86_64"
+    __CURRENT_OS__="AlopexOS"
 )
 
 

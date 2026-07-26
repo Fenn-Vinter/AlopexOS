@@ -82,6 +82,10 @@ auto AlopexOS::NVMe::Controller::get_instance() -> AlopexOS::NVMe::Controller& {
 }
 
 auto AlopexOS::NVMe::Controller::init(uptr bar0_physical_address, uptr hhdm_offset) -> bool {
+    if (m_initialized) {
+        return true;
+    }
+
     if (!bar0_physical_address) {
         serial_print_nvme("[NVME] ERROR: bar0_physical_address is zero!\n");
         return false;
@@ -138,6 +142,7 @@ auto AlopexOS::NVMe::Controller::init(uptr bar0_physical_address, uptr hhdm_offs
         return false;
     }
 
+    m_initialized = true;
     serial_print_nvme("[NVME] Controller init completed successfully.\n");
     return true;
 }
@@ -260,23 +265,19 @@ auto AlopexOS::NVMe::Controller::namespace_attach() -> bool {
     SubmissionQueueEntry& cmd = m_admin_sq[m_sq_tail];
     __builtin_memset(&cmd, 0, sizeof(SubmissionQueueEntry));
 
-    // Namespace Management / Attach Opcode for Admin command is 0x15 (Namespace Attach)
-    // cdw10 = 0x00 (Attach Namespace, select controller)
     cmd.cdw0 = 0x15 | (static_cast<u32>(cid) << 16);
     cmd.nsid = 1;
 
-    // We can allocate a small buffer containing the controller ID list (usually just controller ID 0)
     struct alignas(4096) AlignedBuffer {
         u8 data[4096];
     };
     static AlignedBuffer attach_buffer;
     __builtin_memset(attach_buffer.data, 0, sizeof(attach_buffer.data));
-    // Number of controllers = 1, Controller ID = 0 (or whatever controller ID is reported, typically 0)
     *reinterpret_cast<u16*>(attach_buffer.data) = 1; 
-    *reinterpret_cast<u16*>(attach_buffer.data + 2) = 0; // First controller entry = 0
+    *reinterpret_cast<u16*>(attach_buffer.data + 2) = 0;
 
     cmd.dptr[0] = static_cast<u64>(virt_to_phys(attach_buffer.data));
-    cmd.cdw10 = 0x00; // Select Namespace Attach (Sel = 0)
+    cmd.cdw10 = 0x00;
 
     serial_print_nvme("[NVME] Submitting Namespace Attach (NSID=1)...\n");
     m_sq_tail = (m_sq_tail + 1) % 64;
@@ -297,7 +298,6 @@ auto AlopexOS::NVMe::Controller::namespace_attach() -> bool {
             ring_cq_doorbell(0, m_cq_head);
             
             if (!check_status(status_field)) {
-                // Extract SCT and SC to check for 0x18 (Namespace Already Attached)
                 u8 sct = (status_field >> 9) & 0x7;
                 u8 sc = (status_field >> 1) & 0xFF;
 
@@ -334,7 +334,7 @@ auto AlopexOS::NVMe::Controller::check_status(u16 status_field) -> bool {
 auto AlopexOS::NVMe::Controller::shutdown() -> bool {
     serial_print_nvme("[NVME] Initiating Controller Shutdown...\n");
     u32 cc = m_regs->cc;
-    cc |= (0x2u << 14); // Set SHN to normal shutdown
+    cc |= (0x2u << 14);
     m_regs->cc = cc;
 
     while (!(m_regs->csts & (0x2u << 4))) {
@@ -465,22 +465,17 @@ auto AlopexOS::NVMe::Controller::read(PhysicalAddress dest_phys, u64 lba, u32 co
     SubmissionQueueEntry& cmd = m_io_sq[m_io_sq_tail];
     __builtin_memset(&cmd, 0, sizeof(SubmissionQueueEntry));
 
-    // CDW0: Opcode 0x02 in bits [7:0], Command ID in bits [31:16]
     cmd.cdw0 = 0x02 | (static_cast<u32>(cid) << 16);
     cmd.nsid = 1;
     
-    // Ensure address is strictly physical
     u64 phys_target = dest_phys;
     if (phys_target > m_hhdm_offset) {
         phys_target = virt_to_phys(reinterpret_cast<void*>(phys_target));
     }
     cmd.dptr[0] = phys_target;
 
-    // CDW10/11: Starting LBA (64-bit)
     cmd.cdw10 = static_cast<u32>(lba & 0xFFFFFFFF);
     cmd.cdw11 = static_cast<u32>((lba >> 32) & 0xFFFFFFFF);
-    
-    // CDW12: Number of Logical Blocks (0-based, so count - 1)
     cmd.cdw12 = (count - 1) & 0xFFFF;
 
     serial_print_nvme("[NVME] Submitting I/O Read Command...\n");
@@ -516,22 +511,17 @@ auto AlopexOS::NVMe::Controller::write(PhysicalAddress src_phys, u64 lba, u32 co
     SubmissionQueueEntry& cmd = m_io_sq[m_io_sq_tail];
     __builtin_memset(&cmd, 0, sizeof(SubmissionQueueEntry));
 
-    // CDW0: Opcode 0x01 in bits [7:0], Command ID in bits [31:16]
     cmd.cdw0 = 0x01 | (static_cast<u32>(cid) << 16);
     cmd.nsid = 1;
 
-    // Ensure address is strictly physical
     u64 phys_source = src_phys;
     if (phys_source > m_hhdm_offset) {
         phys_source = virt_to_phys(reinterpret_cast<void*>(phys_source));
     }
     cmd.dptr[0] = phys_source;
 
-    // CDW10/11: Starting LBA (64-bit)
     cmd.cdw10 = static_cast<u32>(lba & 0xFFFFFFFF);
     cmd.cdw11 = static_cast<u32>((lba >> 32) & 0xFFFFFFFF);
-    
-    // CDW12: Number of Logical Blocks (0-based)
     cmd.cdw12 = (count - 1) & 0xFFFF;
 
     serial_print_nvme("[NVME] Submitting I/O Write Command...\n");

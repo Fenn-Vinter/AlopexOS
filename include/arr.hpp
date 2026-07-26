@@ -45,6 +45,38 @@ public:
         }
     }
 
+    template <typename CharT>
+    arr(CharT* cstring) {
+        static_assert(sizeof(T) == sizeof(char), "cstring is only valid for arrays of size char");
+        for (size_t i = 0; i < N; data_[i++] = 0);
+        if (!cstring) return;
+        for (int i = 0; cstring[i] != '\0' && i < static_cast<int>(N); ++i) {
+            data_[i] = static_cast<T>(cstring[i]);
+        }
+    }
+
+    template <typename CharT>
+    arr(const CharT* cstring) {
+        static_assert(sizeof(T) == sizeof(char), "cstring is only valid for arrays of size char");
+        for (size_t i = 0; i < N; data_[i++] = 0);
+        if (!cstring) return;
+        for (int i = 0; cstring[i] != '\0' && i < static_cast<int>(N); ++i) {
+            data_[i] = static_cast<T>(cstring[i]);
+        }
+    }
+
+    template <typename CharT>
+    reference operator=(const CharT* cstring) {
+        static_assert(sizeof(T) == sizeof(char), "cstring is only valid for arrays of size char");
+        for (size_t i = 0; i < N; data_[i++] = 0);
+        if (cstring) {
+            for (int i = 0; cstring[i] != '\0' && i < static_cast<int>(N); ++i) {
+                data_[i] = static_cast<T>(cstring[i]);
+            }
+        }
+        return data_[0];
+    }
+
     constexpr size_type size() const { return N; }
     constexpr bool empty() const { return N == 0; }
 
@@ -58,6 +90,7 @@ public:
 
     pointer data() { return data_; }
     const_pointer data() const { return data_; }
+
 private:
     T data_[N];
 };
@@ -74,13 +107,26 @@ public:
 
     dynarr() : data_(nullptr), size_(0), capacity_(0) {}
 
+    dynarr(const T* external_data, size_type n) 
+        : data_(const_cast<T*>(external_data)), size_(n), capacity_(0) {}
+
     explicit dynarr(size_type n) : data_(nullptr), size_(0), capacity_(0) {
         resize(n);
     }
 
+    template <typename CharT>
+    dynarr(CharT* cstring) : data_(nullptr), size_(0), capacity_(0) {
+        init_from_cstring(cstring);
+    }
+
+    template <typename CharT>
+    dynarr(const CharT* cstring) : data_(nullptr), size_(0), capacity_(0) {
+        init_from_cstring(cstring);
+    }
+
     ~dynarr() {
         clear();
-        if (data_) {
+        if (data_ && capacity_ > 0) {
             ::operator delete(data_);
         }
     }
@@ -126,6 +172,22 @@ public:
         return *this;
     }
 
+    template <typename CharT>
+    dynarr& operator=(const CharT* cstring) {
+        static_assert(sizeof(T) == sizeof(char), "cstring assignment is only valid for dynarr of size char");
+        clear();
+        if (!cstring) return *this;
+        size_type len = 0;
+        while (cstring[len] != '\0') {
+            len++;
+        }
+        resize(len);
+        for (size_type i = 0; i < len; ++i) {
+            data_[i] = static_cast<T>(cstring[i]);
+        }
+        return *this;
+    }
+
     void reserve(size_type new_cap) {
         if (new_cap > capacity_) {
             grow(new_cap);
@@ -157,13 +219,23 @@ public:
         ++size_;
     }
 
-    void append(const T& value) {
-        push_back(value);
+    template <typename CharT>
+    void push_back(const CharT* cstring) {
+        static_assert(sizeof(T) == sizeof(char), "cstring push_back is only valid for dynarr of size char");
+        if (!cstring) return;
+        size_type len = 0;
+        while (cstring[len] != '\0') {
+            len++;
+        }
+        size_type old_size = size_;
+        resize(size_ + len);
+        for (size_type i = 0; i < len; ++i) {
+            data_[old_size + i] = static_cast<T>(cstring[i]);
+        }
     }
 
-    void append(T&& value) {
-        push_back(static_cast<T&&>(value));
-    }
+    void append(const T& value) { push_back(value); }
+    void append(T&& value) { push_back(static_cast<T&&>(value)); }
 
     template <typename... Args>
     void append(Args&&... args) {
@@ -224,6 +296,20 @@ private:
     T* data_;
     size_type size_;
     size_type capacity_;
+
+    template <typename CharT>
+    void init_from_cstring(const CharT* cstring) {
+        static_assert(sizeof(T) == sizeof(char), "cstring constructor is only valid for dynarr of size char");
+        if (!cstring) return;
+        size_type len = 0;
+        while (cstring[len] != '\0') {
+            len++;
+        }
+        resize(len);
+        for (size_type i = 0; i < len; ++i) {
+            data_[i] = static_cast<T>(cstring[i]);
+        }
+    }
 
     void grow(size_type new_cap) {
         T* new_data = static_cast<T*>(::operator new(sizeof(T) * new_cap));

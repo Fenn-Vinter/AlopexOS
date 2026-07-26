@@ -55,6 +55,10 @@ public:
         AurenFox::memory::construct_at(&storage_.value, AurenFox::memory::move(val));
     }
 
+    constexpr explicit Expected(Type& val) : has_value_(true) {
+        AurenFox::memory::construct_at(&storage_.value, val);
+    }
+
     constexpr explicit Expected(const unexpected<Error>& err) : has_value_(false) {
         AurenFox::memory::construct_at(&storage_.error, err.error());
     }

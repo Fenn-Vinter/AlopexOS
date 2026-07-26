@@ -27,6 +27,7 @@ struct AlopexOS::PhysicalStorage {
     StorageType type{StorageType::NVME};
     StorageSubmitHandler submit_fn{nullptr};
     StorageProcessHandler process_fn{nullptr};
+    char name[64]{0};
 };
 
 struct AlopexOS::StorageDeviceInfo {
@@ -70,6 +71,15 @@ public:
         errorCode status = errorCode::Success;
         ((status = submit_request(requests)), ...);
         return status;
+    }
+
+    const PhysicalStorage* get_device(Handle handle) const {
+        if (handle >= _storageDevices.size()) return nullptr;
+        return &_storageDevices[handle];
+    }
+
+    size_t device_count() const {
+        return _storageDevices.size();
     }
 
     errorCode process_queue();

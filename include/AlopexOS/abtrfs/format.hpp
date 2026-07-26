@@ -54,6 +54,12 @@ struct AbtrFSAccessControl {
 } PACKED_END;
 
 PACKED
+struct AbtrfsExtent {
+    u64 start_block;
+    u64 block_count;
+} PACKED_END;
+
+PACKED
 struct AbtrFSDiskHeader {
     AbtrFSBaseHeader base{};
     AbtrFSAccessControl acl{};
@@ -69,7 +75,9 @@ struct AbtrFSDiskHeader {
     u16 size{};
     u64 block_size{ABTRFS_HEADER_BLOCK_SIZE};
     u64 payload_offset{};
-    char reserved[ABTRFS_HEADER_BLOCK_SIZE - sizeof(AbtrFSBaseHeader) - 764]{};
+    u8 extent_count;
+    AbtrfsExtent extents[64];
+    char reserved[ABTRFS_HEADER_BLOCK_SIZE - sizeof(AbtrFSBaseHeader) - 1789]{};
 } PACKED_END;
 
 static_assert(sizeof(AbtrFSDiskHeader) == ABTRFS_HEADER_BLOCK_SIZE, "AbtrFSDiskHeader must exactly match one 4096-byte block");

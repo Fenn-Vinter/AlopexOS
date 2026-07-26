@@ -289,7 +289,7 @@ class AlopexOS::basic_string {
 };
 
 // Comparison Operators
-template <u64 Cap1, u64 Cap2>
+template <u64 Cap1 = 23, u64 Cap2 = 23>
 inline auto operator==(const AlopexOS::basic_string<Cap1>& lhs, const AlopexOS::basic_string<Cap2>& rhs) -> bool {
     if (lhs.length() != rhs.length()) return false;
     AlopexOS::string_view sv1 = lhs;
@@ -300,12 +300,12 @@ inline auto operator==(const AlopexOS::basic_string<Cap1>& lhs, const AlopexOS::
     return true;
 }
 
-template <u64 Cap1, u64 Cap2>
+template <u64 Cap1 = 23, u64 Cap2 = 23>
 inline auto operator!=(const AlopexOS::basic_string<Cap1>& lhs, const AlopexOS::basic_string<Cap2>& rhs) -> bool {
     return !(lhs == rhs);
 }
 
-template <u64 Cap1, u64 Cap2>
+template <u64 Cap1 = 23, u64 Cap2 = 23>
 inline auto operator<(const AlopexOS::basic_string<Cap1>& lhs, const AlopexOS::basic_string<Cap2>& rhs) -> bool {
     AlopexOS::string_view sv1 = lhs;
     AlopexOS::string_view sv2 = rhs;
@@ -317,17 +317,17 @@ inline auto operator<(const AlopexOS::basic_string<Cap1>& lhs, const AlopexOS::b
     return sv1.length() < sv2.length();
 }
 
-template <u64 Cap1, u64 Cap2>
+template <u64 Cap1 = 23, u64 Cap2 = 23>
 inline auto operator>(const AlopexOS::basic_string<Cap1>& lhs, const AlopexOS::basic_string<Cap2>& rhs) -> bool {
     return rhs < lhs;
 }
 
-template <u64 Cap1, u64 Cap2>
+template <u64 Cap1 = 23, u64 Cap2 = 23>
 inline auto operator<=(const AlopexOS::basic_string<Cap1>& lhs, const AlopexOS::basic_string<Cap2>& rhs) -> bool {
     return !(rhs < lhs);
 }
 
-template <u64 Cap1, u64 Cap2>
+template <u64 Cap1 = 23, u64 Cap2 = 23>
 inline auto operator>=(const AlopexOS::basic_string<Cap1>& lhs, const AlopexOS::basic_string<Cap2>& rhs) -> bool {
     return !(lhs < rhs);
 }

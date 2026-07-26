@@ -57,9 +57,11 @@ auto AlopexOS::AlopexIBus::get_storage_devices() const -> const dynarr<BusDevice
     const_cast<AlopexOS::AlopexIBus*>(this)->_storage_devices.clear();
     for (size_t i = 0; i < _discovered_devices.size(); ++i) {
         auto type = _discovered_devices[i].deduced_type;
-        if (type == PhysicalDeducedType::NVME || 
+        if (
+            type == PhysicalDeducedType::NVME || 
             type == PhysicalDeducedType::AHCI_SATA || 
-            type == PhysicalDeducedType::RAW_BLOCK_STORAGE) {
+            type == PhysicalDeducedType::RAW_BLOCK_STORAGE
+        ) {        
             const_cast<AlopexOS::AlopexIBus*>(this)->_storage_devices.push_back(_discovered_devices[i]);
         }
     }
@@ -152,7 +154,6 @@ auto AlopexOS::AlopexIBus::scan_pci_bus() -> errorCode {
                 info.location.pci.device = dev;
                 info.location.pci.function = func;
                 info.deduced_type = deduce_pci_type(class_code, subclass_code, prog_if);
-
                 _discovered_devices.push_back(info);
             }
         }

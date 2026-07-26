@@ -50,6 +50,7 @@ using size_t = unsigned long;
 #endif
 
 using usize = size_t;
+using isize = size_t;
 
 using bit = bool;
 using byte = u8;

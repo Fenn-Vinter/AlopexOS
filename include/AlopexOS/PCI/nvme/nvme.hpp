@@ -56,6 +56,8 @@ private:
 
     auto ring_sq_doorbell(u32 qid, u16 value) -> void;
     auto ring_cq_doorbell(u32 qid, u16 value) -> void;
+
+    bool m_initialized = false;
 };
 
 }
