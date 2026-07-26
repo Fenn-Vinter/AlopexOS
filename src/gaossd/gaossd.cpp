@@ -108,11 +108,6 @@ AlopexOS::gaossd::gaossd() {
     }
 }
 
-auto AlopexOS::gaossd::get_instance() -> AlopexOS::gaossd& {
-    static gaossd instance;
-    return instance;
-}
-
 auto AlopexOS::gaossd::register_device(const PhysicalStorage& device, Handle& out_handle) -> AlopexOS::errorCode {
     if (device.submit_fn == nullptr || device.process_fn == nullptr) {
         return errorCode::InvalidParameters;

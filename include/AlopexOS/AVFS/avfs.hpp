@@ -22,17 +22,22 @@ class AlopexOS::AVFS {
     fn retrieveDrive(const string16& drive) -> AurenFox::core::Expected<uptr, errorCode>;
     fn findPathAfterDrive(const Path& path) -> AurenFox::core::Expected<Path, errorCode>;
 
+    gaossd* _gaossd{nullptr};
+    
     public:
-        AVFS();
+        AVFS() = default;
         ~AVFS() = default;
-        gaossd* GAOSSD = nullptr;
 
+        fn Init() -> void;
         fn mount(const Path& path) -> errorCode;
         fn dismount(const Path& path) -> errorCode;
 
         fn write(const Path& path, const dynarr<byte>& data) -> errorCode;
         fn read(const Path& path, const dynarr<byte>& data) -> errorCode;
         fn exists(const Path& path) -> errorCode;
+
+        fn attach_gaossd(gaossd* Gaossd) -> errorCode;
+        fn gaossd_instance() -> gaossd*;
 };
 
 class AlopexOS::AVFS::drive {

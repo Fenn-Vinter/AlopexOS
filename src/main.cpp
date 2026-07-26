@@ -75,7 +75,7 @@ extern "C" auto kmain() -> void {
     auto& ibus = AlopexOS::AlopexIBus::get_instance();
     ibus.scan_all_buses();
 
-    [[maybe_unused]] auto& gaossd_inst = AlopexOS::gaossd::get_instance();
+    AlopexOS::gaossd Gaossd{};
 
     const auto& storage_devices = ibus.get_storage_devices();
     if (storage_devices.size() == 0) {
@@ -120,6 +120,7 @@ extern "C" auto kmain() -> void {
 
     u64 hhdm = ibus.get_hhdm_offset();
     AlopexOS::AbtrFS abtrfs_instance;
+    abtrfs_instance.attach_gaossd(&Gaossd);
     
     uptr base_addr = storage_devices[0].base_address;
     auto dev_handle = static_cast<AlopexOS::Handle>(0);
@@ -133,6 +134,8 @@ extern "C" auto kmain() -> void {
     }
 
     AlopexOS::AVFS avfs{};
+    avfs.attach_gaossd(&Gaossd);
+    avfs.Init();
     AlopexOS::errorCode code = avfs.mount("QEMU NVMe Ctrl://");
     if (code == AlopexOS::errorCode::Success) {
         mainScreen->clear(0x00FF8800);
@@ -182,21 +185,3 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor i
         asm volatile("hlt");
     }
 }
-
-
-/*
-
-dynarr<byte> data2 = R"(AlopexOS AbtrFS Secondary File Validation:
-This is a second test file written immediately after the stress test payload.
-Testing directory listing allocation, multi-file inode handling, and sector offset tracking.)";
-
-    AlopexOS::errorCode write_code2 = avfs.write("QEMU NVMe Ctrl://SecondFile.txt", data2);
-    if (write_code2 == AlopexOS::errorCode::Success) {
-        serial_print("[KMAIN] Second write (SecondFile.txt) succeeded!\n");
-    } else {
-        serial_print("[KMAIN] ERROR: Second write failed with error code: ");
-        serial_print(AlopexOS::returnErrorAsCstring(write_code2));
-        serial_print("\n");
-    }
-
-*/

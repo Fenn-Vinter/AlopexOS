@@ -8,14 +8,13 @@
 #include <AlopexOS/abtrfs/format.hpp>
 #include <memory.hpp>
 
-static inline void serial_out(u16 port, u8 val) {
-    asm volatile("outb %0, %1" : : "a"(val), "Nd"(port));
+fn AlopexOS::AbtrFS::attach_gaossd(gaossd* Gaossd) -> errorCode {
+    this->_gaossd = Gaossd;
+    return errorCode::Success;
 }
 
-static void serial_print_abtr(const char* str) {
-    for (int i = 0; str[i] != '\0'; i++) {
-        serial_out(0x3F8, str[i]);
-    }
+fn AlopexOS::AbtrFS::gaossd_instance() -> gaossd* {
+    return this->_gaossd;
 }
 
 fn AlopexOS::AbtrFS::mount(uptr base_address, u64 hhdm_offset, Handle device_handle) -> bool {
@@ -63,8 +62,8 @@ fn AlopexOS::AbtrFS::read_block(u64 block_address, void* buffer) -> bool {
     auto& nvme_ctrl = NVMe::Controller::get_instance();
     req.PhysAddr = nvme_ctrl.virt_to_phys(buffer);
 
-    auto& ssd = gaossd::get_instance();
-    if (ssd.submit_request(req) != errorCode::Success || ssd.process_queue() != errorCode::Success) {
+    auto ssd = gaossd_instance();
+    if (ssd->submit_request(req) != errorCode::Success || ssd->process_queue() != errorCode::Success) {
         return false;
     }
 
@@ -85,7 +84,7 @@ fn AlopexOS::AbtrFS::write_block(u64 block_address, const void* buffer) -> bool 
     auto& nvme_ctrl = NVMe::Controller::get_instance();
     req.PhysAddr = nvme_ctrl.virt_to_phys(const_cast<void*>(buffer));
 
-    auto& ssd = gaossd::get_instance();
+    auto ssd = gaossd();
     if (ssd.submit_request(req) != errorCode::Success || ssd.process_queue() != errorCode::Success) {
         return false;
     }

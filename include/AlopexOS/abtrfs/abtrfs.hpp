@@ -1,3 +1,4 @@
+#include "AlopexOS/gaossd/gaossd.hpp"
 #if !defined(ABTRFS_HPP)
 #define ABTRFS_HPP
 
@@ -25,11 +26,6 @@ public:
     AbtrFS() = default;
     ~AbtrFS() = default;
 
-    AbtrFS(const AbtrFS&) = delete;
-    fn operator=(const AbtrFS&) -> AbtrFS& = delete;
-    AbtrFS(AbtrFS&&) = default;
-    fn operator=(AbtrFS&&) -> AbtrFS& = delete;
-
     fn mount(uptr base_address, u64 hhdm_offset, Handle device_handle) -> bool;
     fn format(const uptr& base_address, const u64& hhdm_offset, const Handle& device_handle) -> bool;
     fn read_block(u64 block_address, void* buffer) -> bool;
@@ -37,10 +33,7 @@ public:
     
     fn is_mounted() const -> bool { return _is_mounted; }
 
-    // Updated with write_offset support
     fn write_file(const AlopexOS::Path& path, const dynarr<byte>& data, u64 write_offset = 0) -> AlopexOS::errorCode;
-    
-    // Updated with read_offset and max_read_size (0 = MAX) support
     fn read_file(const AlopexOS::Path& path, dynarr<byte>* data = nullptr, u64 read_offset = 0, u64 max_read_size = 0) -> AurenFox::core::Expected<dynarr<byte>, AlopexOS::errorCode>;
     
     fn exists(const AlopexOS::Path& path) -> AlopexOS::errorCode;
@@ -52,6 +45,9 @@ public:
     fn RootNode_Get() const -> const TreeNode* { return _root_node; }
 
     fn mount_existing(uptr base_address, u64 hhdm_offset, Handle device_handle) -> void;
+
+    fn attach_gaossd(gaossd* Gaossd) -> errorCode;
+    fn gaossd_instance() -> gaossd*;
 private:
     bool _is_mounted{false};
     PARTITION_HEADER _partition_header{};
@@ -59,6 +55,7 @@ private:
     u64 _hhdm_offset{0};
     Handle _device_handle{InvalidHandle};
     TreeNode* _root_node{nullptr};
+    gaossd* _gaossd{nullptr};
 };
 
 #endif

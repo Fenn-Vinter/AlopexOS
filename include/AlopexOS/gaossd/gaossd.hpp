@@ -57,12 +57,13 @@ struct AlopexOS::AlopexOS_REQUEST_storage {
 
 class AlopexOS::gaossd {
 public:
-    static gaossd& get_instance();
+    gaossd();
+    ~gaossd() = default;
 
     gaossd(const gaossd&) = delete;
     gaossd& operator=(const gaossd&) = delete;
-    gaossd(gaossd&&) = delete;
-    gaossd& operator=(gaossd&&) = delete;
+    gaossd(gaossd&&) = default;
+    gaossd& operator=(gaossd&&) = default;
 
     errorCode submit_request(AlopexOS_REQUEST_storage& request);
 
@@ -83,12 +84,10 @@ public:
     }
 
     errorCode process_queue();
+    errorCode scan_and_initialize_hardware();
 
 private:
-    gaossd();
-
     errorCode register_device(const PhysicalStorage& device, Handle& out_handle);
-    errorCode scan_and_initialize_hardware();
 
     dynarr<PhysicalStorage> _storageDevices{};
     dynarr<AlopexOS_REQUEST_storage*> _queue{};

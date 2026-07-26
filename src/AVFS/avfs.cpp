@@ -33,7 +33,16 @@ namespace {
     }
 }
 
-AlopexOS::AVFS::AVFS() {
+fn AlopexOS::AVFS::attach_gaossd(gaossd* Gaossd) -> errorCode {
+    this->_gaossd = Gaossd;
+    return errorCode::Success;
+}
+
+fn AlopexOS::AVFS::gaossd_instance() -> gaossd* {
+    return this->_gaossd;
+}
+
+fn AlopexOS::AVFS::Init() -> void {
     errorCode err{};
     serial_print("\033[36m[AVFS] Initializing!!!\033[0m\n");
     auto& ibus = AlopexOS::AlopexIBus::get_instance();
@@ -49,11 +58,9 @@ AlopexOS::AVFS::AVFS() {
         serial_print_hex(ibus.get_storage_devices().size());
         serial_print("\n");
     }
-
-    this->GAOSSD = &gaossd::get_instance();
     
     serial_print("\033[36m[AVFS] GAOSSD registered device count: \033[0m");
-    serial_print_hex(GAOSSD->device_count());
+    serial_print_hex(_gaossd->device_count());
     serial_print("\n");
 
     hhdm = ibus.get_hhdm_offset();
@@ -71,8 +78,8 @@ AlopexOS::AVFS::AVFS() {
         Handle matched_handle = InvalidHandle;
         const AlopexOS::PhysicalStorage* matched_dev = nullptr;
 
-        for (size_t h = 0; h < GAOSSD->device_count(); ++h) {
-            const auto* dev = GAOSSD->get_device(h);
+        for (size_t h = 0; h < _gaossd->device_count(); ++h) {
+            const auto* dev = _gaossd->get_device(h);
             if (dev) {
                 serial_print("\033[36m[AVFS]   -> Comparing against GAOSSD device [\033[0m");
                 serial_print_hex(h);
@@ -93,9 +100,9 @@ AlopexOS::AVFS::AVFS() {
             }
         }
 
-        if (matched_handle == InvalidHandle && GAOSSD->device_count() > 0) {
+        if (matched_handle == InvalidHandle && _gaossd->device_count() > 0) {
             matched_handle = 0;
-            matched_dev = GAOSSD->get_device(0);
+            matched_dev = _gaossd->get_device(0);
             serial_print("\033[33m[AVFS] WARNING: Fallback to GAOSSD device handle 0\033[0m\n");
         }
 
@@ -255,15 +262,15 @@ fn AlopexOS::AVFS::mount(const Path& path) -> errorCode {
     AlopexOS::AVFS::drive* drive = reinterpret_cast<AlopexOS::AVFS::drive*>(driveptr.value());
 
     Handle matched_handle = InvalidHandle;
-    for (size_t h = 0; h < GAOSSD->device_count(); ++h) {
-        const auto* dev = GAOSSD->get_device(h);
+    for (size_t h = 0; h < _gaossd->device_count(); ++h) {
+        const auto* dev = _gaossd->get_device(h);
         if (dev && dev->address == *drive->BaseAdress_Get()) {
             matched_handle = static_cast<Handle>(h);
             break;
         }
     }
 
-    if (matched_handle == InvalidHandle && GAOSSD->device_count() > 0) {
+    if (matched_handle == InvalidHandle && _gaossd->device_count() > 0) {
             matched_handle = 0;
             serial_print("\033[33m[AVFS] mount warning: Falling back to GAOSSD device handle 0.\033[0m\n");
     }
@@ -277,7 +284,8 @@ fn AlopexOS::AVFS::mount(const Path& path) -> errorCode {
 
     {
         serial_print("\033[36m[AVFS] Attempting AbtrFS mount sequence...\033[0m\n");
-        AbtrFS abtrfs;
+        AbtrFS abtrfs{};
+        abtrfs.attach_gaossd(_gaossd);
         abtrfs.mount(*drive->BaseAdress_Get(), hhdm, matched_handle);
         error = abtrfs.is_mounted() ? errorCode::Success : errorCode::DeviceNotMounted;
 
@@ -309,15 +317,15 @@ fn AlopexOS::AVFS::write(const Path& path, const dynarr<byte>& data) -> errorCod
     AlopexOS::AVFS::drive* drive = reinterpret_cast<AlopexOS::AVFS::drive*>(driveptr.value());
 
     Handle matched_handle = InvalidHandle;
-    for (size_t h = 0; h < GAOSSD->device_count(); ++h) {
-        const auto* dev = GAOSSD->get_device(h);
+    for (size_t h = 0; h < _gaossd->device_count(); ++h) {
+        const auto* dev = _gaossd->get_device(h);
         if (dev && dev->address == *drive->BaseAdress_Get()) {
             matched_handle = static_cast<Handle>(h);
             break;
         }
     }
 
-    if (matched_handle == InvalidHandle && GAOSSD->device_count() > 0) {
+    if (matched_handle == InvalidHandle && _gaossd->device_count() > 0) {
             matched_handle = 0;
             serial_print("\033[33m[AVFS:write] Falling back to GAOSSD device handle 0.\033[0m\n");
     }
@@ -346,7 +354,8 @@ fn AlopexOS::AVFS::write(const Path& path, const dynarr<byte>& data) -> errorCod
         }
     }
 
-    AbtrFS abtrfs;
+    AbtrFS abtrfs{};
+    abtrfs.attach_gaossd(_gaossd);
     abtrfs.mount_existing(*drive->BaseAdress_Get(), hhdm, matched_handle);
 
     return abtrfs.write_file(directory.value(), clean_data);
@@ -369,15 +378,15 @@ fn AlopexOS::AVFS::read(const Path& path, const dynarr<byte>& data) -> errorCode
     AlopexOS::AVFS::drive* drive = reinterpret_cast<AlopexOS::AVFS::drive*>(driveptr.value());
 
     Handle matched_handle = InvalidHandle;
-    for (size_t h = 0; h < GAOSSD->device_count(); ++h) {
-        const auto* dev = GAOSSD->get_device(h);
+    for (size_t h = 0; h < _gaossd->device_count(); ++h) {
+        const auto* dev = _gaossd->get_device(h);
         if (dev && dev->address == *drive->BaseAdress_Get()) {
             matched_handle = static_cast<Handle>(h);
             break;
         }
     }
 
-    if (matched_handle == InvalidHandle && GAOSSD->device_count() > 0) {
+    if (matched_handle == InvalidHandle && _gaossd->device_count() > 0) {
         matched_handle = 0;
         serial_print("\033[33m[AVFS:read] Falling back to GAOSSD device handle 0.\033[0m\n");
     }
@@ -393,7 +402,8 @@ fn AlopexOS::AVFS::read(const Path& path, const dynarr<byte>& data) -> errorCode
         return directory.error();
     }
 
-    AbtrFS abtrfs;
+    AbtrFS abtrfs{};
+    abtrfs.attach_gaossd(_gaossd);
     abtrfs.mount_existing(*drive->BaseAdress_Get(), hhdm, matched_handle);
 
     // Pass the address of the buffer view, starting offset 0, and max_read_size = data.size()
