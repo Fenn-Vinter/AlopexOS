@@ -1,0 +1,181 @@
+#include <fennlib/sys>
+#include <skeleton.hpp>
+#include <fennlib/types>
+#include <boot/bootPixel.hpp>
+#include <boot/bootConsole.hpp>
+#include <displayManager.hpp>
+#include <synapse.hpp>
+#include <logger.hpp>
+#include <kernel/DRAMA.hpp>
+
+using namespace fennlib;
+
+namespace {
+    auto number_to_string(u32 val) -> fennlib::string {
+        if (val == 0) {
+            return "0";
+        }
+        char buffer[32];
+        int idx = 31;
+        buffer[idx] = '\0';
+        while (val > 0 && idx > 0) {
+            buffer[--idx] = '0' + (val % 10);
+            val /= 10;
+        }
+        return &buffer[idx];
+    }
+}
+
+extern "C" void kmain(void) {
+    io::Skeleton skeleton;
+    skeleton.init();
+
+    io::Logger logger;
+    logger.init();
+
+    graphics::DisplayManager displayManager;
+
+    displayManager.update(skeleton);
+
+    if (!displayManager.getPrimaryDisplay()) skeleton.halt();
+
+    u32 frame_counter = 0;
+
+    io::Synapse synapse;
+    bool synapse_initialized = false;
+
+    AlopexOS::Kernel::DRAMA drama(&synapse);
+    bool drama_initialized = false;
+
+    if constexpr (sys::bootloader::is_limine) {
+        bootConsole::write_boot_log("bootloader: Limine");
+    }
+
+    for (;;) {
+        if (!synapse_initialized) {
+            bootConsole::write_boot_log("Initializing: synapse!...");
+            synapse.init(skeleton, logger);
+            synapse_initialized = true;
+            bootConsole::write_boot_log("Initialized: synapse.");
+            
+            bootConsole::write_boot_log("--- Logger Diagnostic Dump ---");
+            for (const auto& entry : logger.get_entries()) {
+                bootConsole::write_boot_log(entry.message);
+            }
+            bootConsole::write_boot_log("------------------------------");
+            
+            fennlib::string mfr_msg = "Board Mfr: ";
+            mfr_msg += synapse.get_root_motherboard().get_manufacturer().c_str();
+            bootConsole::write_boot_log(mfr_msg.c_str());
+
+            fennlib::string name_msg = "Board Name: ";
+            name_msg += synapse.get_root_motherboard().get_name().c_str();
+            bootConsole::write_boot_log(name_msg.c_str());
+
+            fennlib::string cpu_count_msg = "CPU Count: ";
+            cpu_count_msg += number_to_string(synapse.get_cpus().size()).c_str();
+            bootConsole::write_boot_log(cpu_count_msg.c_str());
+
+            for (const auto& desc : synapse.get_registry()) {
+                if (desc.type == io::DeviceClass::CPU && desc.active) {
+                    fennlib::string cpu_rtt = "CPU UID 0x";
+                    cpu_rtt += number_to_string(desc.uid).c_str();
+                    cpu_rtt += " RTT (CCT): ";
+                    cpu_rtt += number_to_string(static_cast<u32>(desc.rtt)).c_str();
+                    bootConsole::write_boot_log(cpu_rtt.c_str());
+                }
+            }
+
+            int idx = 0;
+            for (const auto& cpu : synapse.get_cpus()) {
+                fennlib::string cpu_mfr = "CPU ";
+                cpu_mfr += number_to_string(idx).c_str();
+                cpu_mfr += " Mfr: ";
+                cpu_mfr += cpu.get_manufacturer().c_str();
+                bootConsole::write_boot_log(cpu_mfr.c_str());
+
+                fennlib::string cpu_ver = "CPU ";
+                cpu_ver += number_to_string(idx).c_str();
+                cpu_ver += " Ver: ";
+                cpu_ver += cpu.get_version().c_str();
+                bootConsole::write_boot_log(cpu_ver.c_str());
+
+                fennlib::string cpu_cores = "CPU ";
+                cpu_cores += number_to_string(idx).c_str();
+                cpu_cores += " Cores: ";
+                cpu_cores += number_to_string(cpu.get_core_count()).c_str();
+                bootConsole::write_boot_log(cpu_cores.c_str());
+
+                fennlib::string cpu_threads = "CPU ";
+                cpu_threads += number_to_string(idx).c_str();
+                cpu_threads += " Threads: ";
+                cpu_threads += number_to_string(cpu.get_thread_count()).c_str();
+                bootConsole::write_boot_log(cpu_threads.c_str());
+
+                idx++;
+            }
+
+            fennlib::string ram_count_msg = "RAM Module Count: ";
+            ram_count_msg += number_to_string(synapse.get_ram_modules().size()).c_str();
+            bootConsole::write_boot_log(ram_count_msg.c_str());
+
+            int ram_idx = 0;
+            for (const auto& ram : synapse.get_ram_modules()) {
+                if (!ram.is_populated()) {
+                    ram_idx++;
+                    continue;
+                }
+
+                fennlib::string ram_loc = "RAM ";
+                ram_loc += number_to_string(ram_idx).c_str();
+                ram_loc += " Locator: ";
+                ram_loc += ram.get_device_locator().c_str();
+                bootConsole::write_boot_log(ram_loc.c_str());
+
+                fennlib::string ram_size = "RAM ";
+                ram_size += number_to_string(ram_idx).c_str();
+                ram_size += " Size (MB): ";
+                ram_size += number_to_string(static_cast<u32>(ram.get_size_mb())).c_str();
+                bootConsole::write_boot_log(ram_size.c_str());
+
+                fennlib::string ram_spd = "RAM ";
+                ram_spd += number_to_string(ram_idx).c_str();
+                ram_spd += " Speed (MHz): ";
+                ram_spd += number_to_string(ram.get_speed_mhz()).c_str();
+                bootConsole::write_boot_log(ram_spd.c_str());
+
+                ram_idx++;
+            }
+        }
+
+        if (!drama_initialized) {
+            bootConsole::write_boot_log("Initializing: DRAMA memory manager!...");
+            drama.init<true>(skeleton, &logger);
+            drama_initialized = true;
+            bootConsole::write_boot_log("Initialized: DRAMA.");
+        }
+
+        auto* primary = displayManager.getPrimaryDisplay();
+        if (primary) {
+            primary->clear(0x00000000);
+            
+            bootConsole::flush(primary->getBackBuffer(), primary->getPitch(), 10, 10, 0xFFFFFFFF);
+            
+            u32 indicator_step = frame_counter % 64;
+
+            bootPixel::drawLoadingIndicator(
+                primary->getBackBuffer(), 
+                primary->getPitch(), 
+                (primary->getWidth() - 256) / 2, 
+                (primary->getHeight() - 256) / 2, 
+                indicator_step
+            );
+            
+            displayManager.flushAll();
+        }
+
+        frame_counter++;
+    }
+    
+    skeleton.halt();
+}

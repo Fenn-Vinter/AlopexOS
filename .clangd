@@ -1,0 +1,19 @@
+CompileFlags:
+  Add:
+    - "-ffreestanding"
+    - "-nostdlib"
+    - "-fno-exceptions"
+    - "-fno-rtti"
+    - "-std=c++20"
+    - "-target"
+    - "x86_64-pc-none-elf"
+    - "-D__AlopexOS__"
+    - "-D__x86_64__"
+    - "-D__Limine__"
+    - "-D__64bit__"
+    - "-D__clangd__"
+    - "-I."
+    - "-I./include"
+  Remove:
+    - "-mno-red-zone"
+    - "-mgeneral-regs-only"

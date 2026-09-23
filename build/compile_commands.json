@@ -1,0 +1,32 @@
+[
+{
+  "directory": "C:/Users/fenn/Desktop/AlopexOS/build",
+  "command": "c:\\msys64\\ucrt64\\bin\\g++.exe -IC:/Users/fenn/Desktop/AlopexOS/include -IC:/Users/fenn/Desktop/AlopexOS/include/limine -IC:/Users/fenn/Desktop/AlopexOS/lib/limine -IC:/Users/fenn/Desktop/AlopexOS/lib/fennlib/include -g -std=c++23 -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-stack-check -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-pie -fno-PIE -fno-pic -mcmodel=kernel -mno-red-zone -mgeneral-regs-only -mno-sse -mno-sse2 -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -D__limine__ -D__AlopexOS__ -D__x86_64__ -o CMakeFiles\\AlopexOS.dir\\src\\main.cpp.obj -c C:\\Users\\fenn\\Desktop\\AlopexOS\\src\\main.cpp",
+  "file": "C:/Users/fenn/Desktop/AlopexOS/src/main.cpp",
+  "output": "C:/Users/fenn/Desktop/AlopexOS/build/CMakeFiles/AlopexOS.dir/src/main.cpp.obj"
+},
+{
+  "directory": "C:/Users/fenn/Desktop/AlopexOS/build",
+  "command": "C:\\msys64\\ucrt64\\bin\\g++.exe -IC:/Users/fenn/Desktop/AlopexOS/include -IC:/Users/fenn/Desktop/AlopexOS/include/limine -IC:/Users/fenn/Desktop/AlopexOS/lib/limine -IC:/Users/fenn/Desktop/AlopexOS/lib/fennlib/include -g -o CMakeFiles\\AlopexOS.dir\\src\\entry.s.obj -c C:\\Users\\fenn\\Desktop\\AlopexOS\\src\\entry.s",
+  "file": "C:/Users/fenn/Desktop/AlopexOS/src/entry.s",
+  "output": "C:/Users/fenn/Desktop/AlopexOS/build/CMakeFiles/AlopexOS.dir/src/entry.s.obj"
+},
+{
+  "directory": "C:/Users/fenn/Desktop/AlopexOS/build",
+  "command": "c:\\msys64\\ucrt64\\bin\\g++.exe -IC:/Users/fenn/Desktop/AlopexOS/include -IC:/Users/fenn/Desktop/AlopexOS/include/limine -IC:/Users/fenn/Desktop/AlopexOS/lib/limine -IC:/Users/fenn/Desktop/AlopexOS/lib/fennlib/include -g -std=c++23 -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-stack-check -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-pie -fno-PIE -fno-pic -mcmodel=kernel -mno-red-zone -mgeneral-regs-only -mno-sse -mno-sse2 -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -D__limine__ -D__AlopexOS__ -D__x86_64__ -o CMakeFiles\\AlopexOS.dir\\src\\heap.cpp.obj -c C:\\Users\\fenn\\Desktop\\AlopexOS\\src\\heap.cpp",
+  "file": "C:/Users/fenn/Desktop/AlopexOS/src/heap.cpp",
+  "output": "C:/Users/fenn/Desktop/AlopexOS/build/CMakeFiles/AlopexOS.dir/src/heap.cpp.obj"
+},
+{
+  "directory": "C:/Users/fenn/Desktop/AlopexOS/build",
+  "command": "c:\\msys64\\ucrt64\\bin\\g++.exe -IC:/Users/fenn/Desktop/AlopexOS/include -IC:/Users/fenn/Desktop/AlopexOS/include/limine -IC:/Users/fenn/Desktop/AlopexOS/lib/limine -IC:/Users/fenn/Desktop/AlopexOS/lib/fennlib/include -g -std=c++23 -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-stack-check -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-pie -fno-PIE -fno-pic -mcmodel=kernel -mno-red-zone -mgeneral-regs-only -mno-sse -mno-sse2 -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -D__limine__ -D__AlopexOS__ -D__x86_64__ -o CMakeFiles\\AlopexOS.dir\\src\\skeleton.cpp.obj -c C:\\Users\\fenn\\Desktop\\AlopexOS\\src\\skeleton.cpp",
+  "file": "C:/Users/fenn/Desktop/AlopexOS/src/skeleton.cpp",
+  "output": "C:/Users/fenn/Desktop/AlopexOS/build/CMakeFiles/AlopexOS.dir/src/skeleton.cpp.obj"
+},
+{
+  "directory": "C:/Users/fenn/Desktop/AlopexOS/build",
+  "command": "c:\\msys64\\ucrt64\\bin\\g++.exe -IC:/Users/fenn/Desktop/AlopexOS/include -IC:/Users/fenn/Desktop/AlopexOS/include/limine -IC:/Users/fenn/Desktop/AlopexOS/lib/limine -IC:/Users/fenn/Desktop/AlopexOS/lib/fennlib/include -g -std=c++23 -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-stack-check -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-pie -fno-PIE -fno-pic -mcmodel=kernel -mno-red-zone -mgeneral-regs-only -mno-sse -mno-sse2 -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -D__limine__ -D__AlopexOS__ -D__x86_64__ -o CMakeFiles\\AlopexOS.dir\\src\\cxx_abi.cpp.obj -c C:\\Users\\fenn\\Desktop\\AlopexOS\\src\\cxx_abi.cpp",
+  "file": "C:/Users/fenn/Desktop/AlopexOS/src/cxx_abi.cpp",
+  "output": "C:/Users/fenn/Desktop/AlopexOS/build/CMakeFiles/AlopexOS.dir/src/cxx_abi.cpp.obj"
+}
+]
