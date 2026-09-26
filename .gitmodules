@@ -1,0 +1,3 @@
+[submodule "lib/fennlib"]
+	path = lib/fennlib
+	url = https://github.com/Fenn-Vinter/fennlib.git

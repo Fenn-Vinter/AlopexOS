@@ -4,9 +4,7 @@
         {
             "label": "clean-build-env",
             "type": "shell",
-            // Use 'rm -rf build' for macOS/Linux, or 'rmdir /s /q build' for Windows PowerShell/CMD. 
-            // Alternatively, handling this inside scripts/build_and_run.py is safer for cross-platform use.
-            "command": "rm -rf build", 
+            "command": "rm -rf build",
             "problemMatcher": []
         }
     ]

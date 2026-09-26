@@ -16,9 +16,10 @@ set(CMAKE_CXX_STANDARD_LIBRARIES "" CACHE STRING "No host libraries for the kern
 # --------------------------------------------------
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
-set(KERNEL_LINKER "C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/Llvm/x64/bin/ld.lld.exe")
+# Allow CMake to find lld dynamically from the system PATH
+set(CMAKE_LINKER "ld.lld" CACHE STRING "Linker" FORCE)
 set(CMAKE_CXX_LINK_EXECUTABLE
-    "\"${KERNEL_LINKER}\" <LINK_FLAGS> <OBJECTS> -o <TARGET>"
+    "ld.lld <LINK_FLAGS> <OBJECTS> -o <TARGET>"
 )
 
 # --------------------------------------------------
@@ -100,7 +101,7 @@ target_link_options(AlopexOS PRIVATE
 add_custom_command(
     TARGET AlopexOS POST_BUILD
     COMMAND
-        ${CMAKE_OBJCOPY}
+        llvm-objcopy
         --remove-section=.note.gnu.property
         --remove-section=.comment
         $<TARGET_FILE:AlopexOS>
