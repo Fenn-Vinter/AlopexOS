@@ -1,0 +1,69 @@
+Date : 2026-07-24 02:06:09
+Directory : /home/fenn/Desktop/AlopexOS
+Total : 26 files,  662 codes, 10 comments, 191 blanks, all 863 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| C++      |         21 |        504 |         10 |        132 |        646 |
+| Markdown |          4 |         92 |          0 |         58 |        150 |
+| log      |          1 |         66 |          0 |          1 |         67 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++----------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                 | files      | code       | comment    | blank      | total      |
++----------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                    |         26 |        662 |         10 |        191 |        863 |
+| . (Files)                                                            |          5 |        158 |          0 |         59 |        217 |
+| include                                                              |         13 |        450 |          8 |         96 |        554 |
+| include (Files)                                                      |          7 |        385 |          8 |         79 |        472 |
+| include/AlopexOS                                                     |          6 |         65 |          0 |         17 |         82 |
+| include/AlopexOS (Files)                                             |          2 |         19 |          0 |          3 |         22 |
+| include/AlopexOS/AVFS                                                |          1 |         32 |          0 |          9 |         41 |
+| include/AlopexOS/PCI                                                 |          1 |         -3 |          0 |          0 |         -3 |
+| include/AlopexOS/PCI/nvme                                            |          1 |         -3 |          0 |          0 |         -3 |
+| include/AlopexOS/SystemXABI                                          |          1 |          3 |          0 |          3 |          6 |
+| include/AlopexOS/abtrfs                                              |          1 |         14 |          0 |          2 |         16 |
+| src                                                                  |          8 |         54 |          2 |         36 |         92 |
+| src (Files)                                                          |          3 |       -170 |          2 |        -23 |       -191 |
+| src/AVFS                                                             |          1 |          0 |          0 |          1 |          1 |
+| src/PCI                                                              |          1 |          4 |          0 |          1 |          5 |
+| src/PCI/nvme                                                         |          1 |          4 |          0 |          1 |          5 |
+| src/abtrfs                                                           |          1 |        213 |          0 |         56 |        269 |
+| src/kernel                                                           |          2 |          7 |          0 |          1 |          8 |
++----------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++----------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                             | language | code       | comment    | blank      | total      |
++----------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| /home/fenn/Desktop/AlopexOS/AlopexOSCxxPhilosophy.md                 | Markdown |         24 |          0 |         23 |         47 |
+| /home/fenn/Desktop/AlopexOS/Contributors.md                          | Markdown |          2 |          0 |          1 |          3 |
+| /home/fenn/Desktop/AlopexOS/LICENSE.md                               | Markdown |         27 |          0 |         10 |         37 |
+| /home/fenn/Desktop/AlopexOS/README.md                                | Markdown |         39 |          0 |         24 |         63 |
+| /home/fenn/Desktop/AlopexOS/include/AlopexOS/AVFS/avfs.hpp           | C++      |         32 |          0 |          9 |         41 |
+| /home/fenn/Desktop/AlopexOS/include/AlopexOS/AlopexOS.hpp            | C++      |         12 |          0 |          3 |         15 |
+| /home/fenn/Desktop/AlopexOS/include/AlopexOS/AlopexOS_ErrorCodes.hpp | C++      |          7 |          0 |          0 |          7 |
+| /home/fenn/Desktop/AlopexOS/include/AlopexOS/PCI/nvme/nvme.hpp       | C++      |         -3 |          0 |          0 |         -3 |
+| /home/fenn/Desktop/AlopexOS/include/AlopexOS/SystemXABI/SystemX.hpp  | C++      |          3 |          0 |          3 |          6 |
+| /home/fenn/Desktop/AlopexOS/include/AlopexOS/abtrfs/abtrfs.hpp       | C++      |         14 |          0 |          2 |         16 |
+| /home/fenn/Desktop/AlopexOS/include/arr.hpp                          | C++      |          2 |          0 |          0 |          2 |
+| /home/fenn/Desktop/AlopexOS/include/expected.hpp                     | C++      |         80 |          2 |         27 |        109 |
+| /home/fenn/Desktop/AlopexOS/include/memory.hpp                       | C++      |         36 |          5 |         12 |         53 |
+| /home/fenn/Desktop/AlopexOS/include/primetives.h                     | C++      |         46 |          0 |         15 |         61 |
+| /home/fenn/Desktop/AlopexOS/include/primitives.h                     | C++      |        -71 |          0 |        -21 |        -92 |
+| /home/fenn/Desktop/AlopexOS/include/primitives.hpp                   | C++      |         72 |          0 |         22 |         94 |
+| /home/fenn/Desktop/AlopexOS/include/string.hpp                       | C++      |        220 |          1 |         24 |        245 |
+| /home/fenn/Desktop/AlopexOS/serial.log                               | log      |         66 |          0 |          1 |         67 |
+| /home/fenn/Desktop/AlopexOS/src/AVFS/avfs.hpp                        | C++      |          0 |          0 |          1 |          1 |
+| /home/fenn/Desktop/AlopexOS/src/AlopexOS.cpp                         | C++      |         19 |          0 |          4 |         23 |
+| /home/fenn/Desktop/AlopexOS/src/PCI/nvme/nvme.cpp                    | C++      |          4 |          0 |          1 |          5 |
+| /home/fenn/Desktop/AlopexOS/src/abtrfs/abtrfs.cpp                    | C++      |        213 |          0 |         56 |        269 |
+| /home/fenn/Desktop/AlopexOS/src/kernel/display.cpp                   | C++      |         -1 |          0 |          0 |         -1 |
+| /home/fenn/Desktop/AlopexOS/src/kernel/new.cpp                       | C++      |          8 |          0 |          1 |          9 |
+| /home/fenn/Desktop/AlopexOS/src/main.cpp                             | C++      |         64 |          2 |          9 |         75 |
+| /home/fenn/Desktop/AlopexOS/src/string.cpp                           | C++      |       -253 |          0 |        -36 |       -289 |
+| Total                                                                |          |        662 |         10 |        191 |        863 |
++----------------------------------------------------------------------+----------+------------+------------+------------+------------+

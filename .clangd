@@ -1,0 +1,12 @@
+CompileFlags:
+  Add:
+    - -ffreestanding
+    - -std=c++23
+    - -Iinclude
+    - -Iinclude/limine/
+    - -D__CURRENT_ARCH__="X86_64"
+    - -D__CURRENT_OS__="AlopexOS"
+Compiler: clang++
+
+Index:
+  Background: Build

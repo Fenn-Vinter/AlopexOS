@@ -1,0 +1,18 @@
+"filename", "language", "C++", "Shell Script", "comment", "blank", "total"
+"/home/fenn/Desktop/AlopexOS/build_and_run.sh", "Shell Script", 0, -50, -8, -10, -68
+"/home/fenn/Desktop/AlopexOS/include/AlopexOS/AVFS/avfs.hpp", "C++", 12, 0, 0, 5, 17
+"/home/fenn/Desktop/AlopexOS/include/AlopexOS/AlopexOS_ErrorCodes.hpp", "C++", 1, 0, 0, 1, 2
+"/home/fenn/Desktop/AlopexOS/include/AlopexOS/PCI/nvme/nvme.hpp", "C++", 1, 0, 0, 1, 2
+"/home/fenn/Desktop/AlopexOS/include/AlopexOS/abtrfs/abtrfs.hpp", "C++", 6, 0, 2, 3, 11
+"/home/fenn/Desktop/AlopexOS/include/AlopexOS/gaossd/gaossd.hpp", "C++", 8, 0, 0, 2, 10
+"/home/fenn/Desktop/AlopexOS/include/arr.hpp", "C++", 75, 0, 0, 8, 83
+"/home/fenn/Desktop/AlopexOS/include/expected.hpp", "C++", 3, 0, 0, 1, 4
+"/home/fenn/Desktop/AlopexOS/src/AVFS/avfs.cpp", "C++", 296, 0, 2, 55, 353
+"/home/fenn/Desktop/AlopexOS/src/AVFS/drive.cpp", "C++", 36, 0, 5, 16, 57
+"/home/fenn/Desktop/AlopexOS/src/AlopexIBus/AlopexIBus.cpp", "C++", 2, 0, 0, -1, 1
+"/home/fenn/Desktop/AlopexOS/src/AlopexOS_ErrorCodes.cpp", "C++", 40, 0, 0, 1, 41
+"/home/fenn/Desktop/AlopexOS/src/PCI/nvme/nvme.cpp", "C++", 4, 0, -13, -1, -10
+"/home/fenn/Desktop/AlopexOS/src/abtrfs/abtrfs.cpp", "C++", -10, 0, 0, -5, -15
+"/home/fenn/Desktop/AlopexOS/src/gaossd/gaossd.cpp", "C++", 15, 0, 0, 3, 18
+"/home/fenn/Desktop/AlopexOS/src/main.cpp", "C++", -18, 0, -2, -7, -27
+"Total", "-", 471, -50, -14, 72, 479
