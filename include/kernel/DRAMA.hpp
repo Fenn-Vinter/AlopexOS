@@ -1,99 +1,256 @@
+#pragma once
 #include "skeleton.hpp"
 #include <logger.hpp>
 #include <fennlib/types>
 #include <fennlib/sequence>
+#include <fennlib/string>
 #include <synapse.hpp>
-#include <AlopexOS/errorCodes.hpp> 
+#include <AlopexOS/errorCodes.hpp>
+#include <AlopexOS/types.hpp>
 
 extern fennlib::u8 heap_pool[16 * 1024 * 1024];
 
 namespace AlopexOS::Kernel {
-    using RAMCellID = fennlib::types::uintptr;
-    using DeviceID = fennlib::types::usize;
-
     class DRAMA {
-        io::Synapse* p_synapse{nullptr};
-        RAMCellID m_next_cell_id{1};
-        
-        struct ramAllocation {
-            fennlib::types::uintptr base_address{0};
-            fennlib::types::usize size_bytes{0};
-            fennlib::string serial{""};
-            RAMCellID ram_cell_id{static_cast<RAMCellID>(-1)};
-            DeviceID ram_device_id{static_cast<DeviceID>(-1)};
-            bool locked{false};
+        struct PhysicalRAM {
+            DeviceID device_id;
+            fennlib::types::uintptr base_address;
+            fennlib::types::usize size_bytes;
         };
-        
-        fennlib::sequence<ramAllocation> p_ram_allocations{};
+        struct VirtualRAM {
+            DeviceID device_id;
+            PID pid;
+            fennlib::types::uintptr base_address;
+            fennlib::types::usize size_bytes;
+        };
 
+        io::Synapse*  p_synapse{nullptr};
+        io::Skeleton* p_skeleton{nullptr};
+
+        fennlib::sequence<PhysicalRAM> p_mountedRAM;
+
+        fennlib::sequence<VirtualRAM> p_mountedVRAM;
     public:
         DRAMA() = default;
         ~DRAMA() = default;
-        DRAMA(io::Synapse* synapse) : p_synapse(synapse) {};
+        DRAMA(io::Skeleton* skeleton, io::Synapse* synapse) : p_synapse(synapse), p_skeleton{skeleton} {};
 
-        template<bool debug = false>
-        inline auto init(io::Skeleton skeleton, io::Logger* logger = nullptr) -> AlopexOS::error_code;
+        template<bool Debug = false>
+        inline auto init(io::Logger* logger) -> AlopexOS::error_code;
 
-        template<bool debug = false>
-        inline auto ram_setup(io::Logger* logger = nullptr) -> AlopexOS::error_code;
+        inline auto init() -> AlopexOS::error_code { return init<false>(nullptr); };
 
-        inline auto malloc(fennlib::types::usize size_bytes, DeviceID ram_device_id = static_cast<DeviceID>(-1)) -> RAMCellID;
-        inline auto migrate(RAMCellID ram_cell_id, DeviceID ram_device_id = static_cast<DeviceID>(-1)) -> RAMCellID;
+        /**
+        * @brief Mounts a physical RAM device from the Synapse.
+        * 
+        * @tparam Debug Enables debug logging if true. Logger must != nullptr
+        * @param ram_device_id The device ID of the RAM module to mount.
+        * @param logger Optional logger instance for debug output.
+        * @return AlopexOS::error_code Success if discovered, or device_not_found if it wasn't found via synapse.
+        */
+        template<bool Debug = false>
+        inline auto mount(DeviceID ram_device_id, io::Logger* logger = nullptr) -> AlopexOS::error_code;
+
+        /**
+        * @brief Mounts a physical RAM device from the Synapse.
+        * 
+        * @param ram_device_id The device ID of the RAM module to mount.
+        * @return AlopexOS::error_code Success if discovered, or device_not_found if it wasn't found via synapse.
+        */
+        inline auto mount(DeviceID ram_device_id) -> AlopexOS::error_code { return mount<false>(ram_device_id); }
+
+        /**
+        * @brief Unmounts a physical RAM device from the Synapse.
+        * 
+        * @tparam Debug Enables debug logging if true.
+        * @param ram_device_id The device ID of the RAM module to remove.
+        * @param logger Optional logger instance for debug output.
+        * @return AlopexOS::error_code Success if removed, or device_not_found if it wasn't mounted.
+        */
+        template<bool Debug = false>
+        inline auto unmount(DeviceID ram_device_id, io::Logger* logger = nullptr) -> AlopexOS::error_code;
+
+        /**
+        * @brief Unmounts a physical RAM device from the Synapse.
+        * 
+        * @param ram_device_id The device ID of the RAM module to remove.
+        * @return AlopexOS::error_code Success if removed, or device_not_found if it wasn't mounted.
+        */
+        inline auto unmount(DeviceID ram_device_id) -> AlopexOS::error_code { return unmount<false>(ram_device_id); }
+
+        template<bool Debug = false>
+        inline auto mount_all(io::Logger* logger) -> AlopexOS::error_code;
+
+        inline auto mount_all() -> AlopexOS::error_code { return mount_all<false>(nullptr); };
+
+        template<bool Debug = false>
+        inline auto malloc(fennlib::types::usize size_bytes, PID pid, DeviceID ram_device_id = "", io::Logger* logger = nullptr) -> fennlib::types::uintptr;
+
+        inline auto malloc(fennlib::types::usize size_bytes, PID pid, DeviceID ram_device_id = "") -> fennlib::types::uintptr { return malloc<false>(size_bytes, pid, ram_device_id); }
+
+        inline auto lastIndex() -> const VirtualRAM& { return *p_mountedVRAM.end(); }
     };
-
 }
 
-template<bool debug>
-inline auto AlopexOS::Kernel::DRAMA::init(io::Skeleton skeleton, io::Logger* logger) -> AlopexOS::error_code {
-    [[unlikely]] if (!p_synapse) return error_code::synapse_not_initialized;
-    
-    if constexpr (debug) {
-        if (logger) {
-            logger->log(io::LogLevel::Info, "[DRAMA::init()] Scanning for devices via Synapse");
-        }
+template<bool Debug>
+inline auto AlopexOS::Kernel::DRAMA::init(io::Logger* logger) -> AlopexOS::error_code {
+    error_code err = mount_all<Debug>(logger);
+    if (err != error_code::Success) {
+        return err;
     }
-
-    p_synapse->scan_hardware(skeleton, logger);
-
-    ram_setup<debug>(logger);
-
+    malloc(sizeof(heap_pool), 0);
     return error_code::Success;
 }
 
-template<bool debug>
-inline auto AlopexOS::Kernel::DRAMA::ram_setup(io::Logger* logger) -> AlopexOS::error_code {
-    for (const auto& ram_module : p_synapse->get_ram_modules()) {
-        bool found = false;
-        for (const auto& allocation : p_ram_allocations) {
-            if (allocation.serial == ram_module.get_serial()) {
-                found = true;
+template<bool Debug>
+inline auto AlopexOS::Kernel::DRAMA::mount_all(io::Logger* logger) -> AlopexOS::error_code {
+    p_synapse->scan_hardware<Debug>(*p_skeleton, logger);
+
+    const auto& modules = p_synapse->get_ram_modules();
+    if (modules.size() == 0) {
+        if constexpr (Debug) {
+            if (logger) {
+                logger->log(io::LogLevel::Info, "[DRAMA::mount_all]: No RAM modules discovered.");
+            }
+        }
+        return AlopexOS::error_code::device_not_found;
+    }
+
+    for (const auto& module : modules) {
+        DeviceID dev_id = module.get_device_locator();
+        
+        bool already_mounted = false;
+        for (const auto& mounted : p_mountedRAM) {
+            if (mounted.device_id == dev_id) {
+                already_mounted = true;
                 break;
             }
         }
-        
-        if (!found) {
-            fennlib::types::uintptr computed_base = reinterpret_cast<fennlib::types::uintptr>(heap_pool) + sizeof(heap_pool);
-            
-            if (!p_ram_allocations.empty()) {
-                const auto& last_alloc = p_ram_allocations[p_ram_allocations.size() - 1];
-                computed_base = last_alloc.base_address + last_alloc.size_bytes;
-            }
 
-            p_ram_allocations.push_back(ramAllocation{
-                .base_address = computed_base,
-                .size_bytes = static_cast<fennlib::types::usize>(ram_module.get_size_mb() * 1000000),
-                .serial = ram_module.get_serial(),
-                .ram_cell_id = m_next_cell_id++,
-                .locked = false
-            });
+        if (already_mounted) continue;
 
-            if constexpr (debug) {
-                if (logger) {
-                    logger->log(io::LogLevel::Info, "[DRAMA::ram_setup()] Registered RAM module cleanly past heap pool.");
-                }
+        fennlib::types::usize size_in_bytes = static_cast<fennlib::types::usize>(module.get_size_mb()) * 1024 * 1024;
+
+        p_mountedRAM.push_back(PhysicalRAM{
+            .device_id = dev_id,
+            .base_address = module.get_base_address(),
+            .size_bytes = size_in_bytes
+        });
+
+        if constexpr (Debug) {
+            if (logger) {
+                logger->log(io::LogLevel::Info, "[DRAMA::mount_all]: Automatically mounted RAM module.");
             }
         }
     }
 
-    return error_code::Success;
+    return AlopexOS::error_code::Success;
+}
+
+template<bool Debug>
+inline auto AlopexOS::Kernel::DRAMA::mount(DeviceID ram_device_id, io::Logger* logger) -> AlopexOS::error_code {
+    auto find_module = [this, &ram_device_id]() -> const auto* {
+        for (const auto& module : p_synapse->get_ram_modules()) {
+            if (module.get_device_locator() == ram_device_id) return &module;
+        }
+        return static_cast<const decltype(&p_synapse->get_ram_modules()[0])>(nullptr);
+    };
+
+    const auto* module_ptr = find_module();
+
+    if (!module_ptr) {
+        p_synapse->scan_hardware<Debug>(*p_skeleton, logger);
+        module_ptr = find_module();
+    }
+
+    if (!module_ptr) return AlopexOS::error_code::device_not_found;
+
+    fennlib::types::usize size_in_bytes = static_cast<fennlib::types::usize>(module_ptr->get_size_mb()) * 1024 * 1024;
+
+    p_mountedRAM.push_back(PhysicalRAM{
+        .device_id = ram_device_id,
+        .base_address = module_ptr->get_base_address(),
+        .size_bytes = size_in_bytes
+    });
+
+    return AlopexOS::error_code::Success;
+}
+
+template<bool Debug>
+inline auto AlopexOS::Kernel::DRAMA::unmount(DeviceID ram_device_id, io::Logger* logger) -> AlopexOS::error_code {
+    for (fennlib::types::usize i = 0; i < p_mountedRAM.size(); ++i) {
+        if (p_mountedRAM[i].device_id == ram_device_id) {
+            p_mountedRAM.erase_ordered(i);
+            if constexpr (Debug) logger->log(io::LogLevel::Info, (fennlib::string("[DRAMA::unmount]: Device successfully unmounted: ") + ram_device_id).c_str());
+            return AlopexOS::error_code::Success;
+        }
+    }
+    if constexpr (Debug) logger->log(io::LogLevel::Info, (fennlib::string("[DRAMA::unmount]: Device not successfully unmounted: ") + ram_device_id).c_str());
+    return AlopexOS::error_code::device_not_found;
+}
+
+template<bool Debug>
+inline auto AlopexOS::Kernel::DRAMA::malloc(fennlib::types::usize size_bytes, PID pid, AlopexOS::types::DeviceID ram_device_id, io::Logger* logger) -> fennlib::types::uintptr {
+    PhysicalRAM* target_phys = nullptr;
+    fennlib::types::uintptr allocation_address = 0;
+
+    if (ram_device_id == "") {
+        for (auto& phys_ram : p_mountedRAM) {
+            fennlib::types::uintptr highest_end = phys_ram.base_address;
+            
+            for (const auto& vram : p_mountedVRAM) {
+                if (vram.device_id == phys_ram.device_id) {
+                    fennlib::types::uintptr end_addr = vram.base_address + vram.size_bytes;
+                    if (end_addr > highest_end) highest_end = end_addr;
+                }
+            }
+
+            if (highest_end + size_bytes <= phys_ram.base_address + phys_ram.size_bytes) {
+                target_phys = &phys_ram;
+                allocation_address = highest_end;
+                break;
+            }
+        }
+    } else {
+        for (auto& phys_ram : p_mountedRAM) {
+            if (phys_ram.device_id == ram_device_id) {
+                target_phys = &phys_ram;
+                break;
+            }
+        }
+
+        if (target_phys) {
+            fennlib::types::uintptr highest_end = target_phys->base_address;
+            
+            for (const auto& vram : p_mountedVRAM) {
+                if (vram.device_id == target_phys->device_id) {
+                    fennlib::types::uintptr end_addr = vram.base_address + vram.size_bytes;
+                    if (end_addr > highest_end) highest_end = end_addr;
+                }
+            }
+
+            if (highest_end + size_bytes <= target_phys->base_address + target_phys->size_bytes) allocation_address = highest_end;
+            else target_phys = nullptr;
+        }
+    }
+
+    if (!target_phys) {
+        if constexpr (Debug) {
+            if (logger) {
+                logger->log(io::LogLevel::Info, "[DRAMA::malloc]: Allocation failed - insufficient physical RAM space.");
+            }
+        }
+        return static_cast<fennlib::types::uintptr>(-1) - static_cast<fennlib::types::uintptr>(AlopexOS::error_code::out_of_memory);
+    }
+
+    p_mountedVRAM.push_back(VirtualRAM{
+        .device_id = target_phys->device_id,
+        .pid = pid,
+        .base_address = allocation_address,
+        .size_bytes = size_bytes
+    });
+
+    if constexpr (Debug) if (logger) logger->log(io::LogLevel::Info, "[DRAMA::malloc]: Virtual RAM successfully allocated to PID.");
+
+    return allocation_address;
 }

@@ -3,9 +3,9 @@
 #include <fennlib/types>
 
 namespace AlopexOS {
-    enum class error_code : fennlib::types::u64{
+    enum class error_code : fennlib::types::u32{
         Success = 0,
-        Error = static_cast<fennlib::u64>(-1),
+        Error = static_cast<fennlib::u32>(-1),
 
         synapse_generic = 0x1000,
         synapse_not_initialized,
@@ -20,6 +20,9 @@ namespace AlopexOS {
         double_free,
         corruption_detected,
         out_of_bounds,
+
+        systemx_generic = 0x3000,
+        invalid_program_range,
 
         dycora_generic = 0x3000
     };

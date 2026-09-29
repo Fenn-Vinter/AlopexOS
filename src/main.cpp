@@ -7,6 +7,10 @@
 #include <synapse.hpp>
 #include <logger.hpp>
 #include <kernel/DRAMA.hpp>
+#include <SystemX/systemx.hpp>
+
+// testing library
+#include <SystemX/test_programs.hpp>
 
 using namespace fennlib;
 
@@ -44,8 +48,10 @@ extern "C" void kmain(void) {
     io::Synapse synapse;
     bool synapse_initialized = false;
 
-    AlopexOS::Kernel::DRAMA drama(&synapse);
+    AlopexOS::Kernel::DRAMA drama(&skeleton, &synapse);
+    SystemX system_x(&drama);
     bool drama_initialized = false;
+    bool systemx_initialized = false;
 
     if constexpr (sys::bootloader::is_limine) {
         bootConsole::write_boot_log("bootloader: Limine");
@@ -150,9 +156,34 @@ extern "C" void kmain(void) {
 
         if (!drama_initialized) {
             bootConsole::write_boot_log("Initializing: DRAMA memory manager!...");
-            drama.init<true>(skeleton, &logger);
+            drama.init<true>(&logger);
+
+            u8* ptr = reinterpret_cast<u8*>(drama.malloc(8, 0));
+
+            ptr[1] = 2;
+
+            if (ptr[1] == 2) {
+                bootConsole::write_boot_log("Malloc is operational!");    
+            }
+
             drama_initialized = true;
             bootConsole::write_boot_log("Initialized: DRAMA.");
+        }
+
+        if (!systemx_initialized) {
+            bootConsole::write_boot_log("Initializing: SystemX!...");
+            
+            usize exit_code = system_x.invoke(
+                test_programs::program_start(test_programs::sample_program),
+                test_programs::program_end(test_programs::sample_program)
+            );
+
+            string exit_code_text = number_to_string(exit_code);
+            bootConsole::write_boot_log(string(string("Return Value of test program: ") + exit_code_text).c_str());
+
+            bootConsole::write_boot_log("Initialized: SystemX");
+
+            systemx_initialized = true;
         }
 
         auto* primary = displayManager.getPrimaryDisplay();

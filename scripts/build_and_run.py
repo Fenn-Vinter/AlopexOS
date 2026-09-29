@@ -13,30 +13,29 @@ def main():
     project_root = os.path.dirname(script_dir)
     build_dir = os.path.join(project_root, "build")
 
-    # Clean build directory to clear any stale CMake cache
+    
     build_path = Path(build_dir)
     if build_path.exists():
         print("[*] Removing old build/ directory for a clean build...")
         shutil.rmtree(build_path)
 
-    print("[*] Configuring CMake project with Clang toolchain...")
     
-    # Use generic tool names so they resolve cleanly from the system PATH (e.g., MSYS2 UCRT64)
-    cmake_cmd = [
+    print("[*] Configuring CMake project with Clang toolchain...")
+    run_cmd([
         "cmake",
         "-B", build_dir,
         "-G", "Ninja",
-        "-DCMAKE_C_COMPILER=clang",
-        "-DCMAKE_CXX_COMPILER=clang++",
-        "-DCMAKE_LINKER=ld.lld",
-        "-DCMAKE_OBJCOPY=llvm-objcopy"
-    ]
+        "-DCMAKE_C_COMPILER=C:/msys64/ucrt64/bin/clang.exe",
+        "-DCMAKE_CXX_COMPILER=C:/msys64/ucrt64/bin/clang++.exe",
+        "-DCMAKE_LINKER=C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/Llvm/x64/bin/ld.lld.exe",
+        "-DCMAKE_OBJCOPY=C:/msys64/ucrt64/bin/llvm-objcopy.exe"
+    ])
 
-    run_cmd(cmake_cmd)
-
+    
     print("[*] Building project...")
     run_cmd(["cmake", "--build", build_dir])
 
+    
     print("[*] Launching QEMU...")
     run_cmd(["cmake", "--build", build_dir, "--target", "run"])
 

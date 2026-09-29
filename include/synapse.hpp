@@ -121,6 +121,7 @@ namespace io {
             fennlib::string m_manufacturer{""};
             fennlib::string m_serial{""};
             fennlib::string m_part_number{""};
+            fennlib::u64 m_base_address{0};
             fennlib::u64 m_size_mb{0};
             fennlib::u32 m_speed_mhz{0};
             bool m_populated{false};
@@ -128,7 +129,7 @@ namespace io {
         public:
             constexpr RAM() = default;
 
-            auto configure(const char* dev_loc, const char* bank_loc, const char* mfr, const char* ser, const char* part, fennlib::u64 size_mb, fennlib::u32 speed, bool populated) -> void {
+            auto configure(const char* dev_loc, const char* bank_loc, const char* mfr, const char* ser, const char* part, fennlib::u64 size_mb, fennlib::u32 speed, bool populated, fennlib::u64 base_address) -> void {
                 m_device_locator = dev_loc;
                 m_bank_locator = bank_loc;
                 m_manufacturer = mfr;
@@ -137,8 +138,10 @@ namespace io {
                 m_size_mb = size_mb;
                 m_speed_mhz = speed;
                 m_populated = populated;
+                m_base_address = base_address;
             }
 
+            // The return value works interchangibly as deviceID
             [[nodiscard]] inline auto get_device_locator() const noexcept -> const fennlib::string& {
                 return m_device_locator;
             }
@@ -157,6 +160,10 @@ namespace io {
 
             [[nodiscard]] inline auto get_part_number() const noexcept -> const fennlib::string& {
                 return m_part_number;
+            }
+
+            [[nodiscard]] inline auto get_base_address() const noexcept -> fennlib::u64 {
+                return m_base_address;
             }
 
             [[nodiscard]] inline auto get_size_mb() const noexcept -> fennlib::u64 {
@@ -375,13 +382,21 @@ auto inline io::Synapse::scan_hardware(const Skeleton& skel, Logger* logger) -> 
 
                 bool populated = (size_mb > 0);
 
+                u64 base_address = 0;
+                if (m_ram_modules.size() > 0) {
+                    auto& prev = m_ram_modules[m_ram_modules.size() - 1];
+                    base_address = prev.get_base_address() + (prev.get_size_mb() * 1024 * 1024);
+                }
+
                 DeviceTypes::RAM ram_device;
-                ram_device.configure(dev_loc, bank_loc, ram_mfr, ram_ser, ram_part, size_mb, ram_speed, populated);
+                ram_device.configure(dev_loc, bank_loc, ram_mfr, ram_ser, ram_part, size_mb, ram_speed, populated, base_address);
                 m_ram_modules.push_back(ram_device);
 
                 registerDevice(DeviceDescriptor{
                     .type = DeviceClass::RAM,
                     .uid = 0x100 + m_ram_modules.size(),
+                    .mmio_base = base_address,
+                    .mmio_size = size_mb * 1024 * 1024,
                     .active = populated
                 });
             }
@@ -394,7 +409,7 @@ auto inline io::Synapse::scan_hardware(const Skeleton& skel, Logger* logger) -> 
     }
 
     DeviceTypes::NVM sample_nvm;
-    sample_nvm.configure("QEMU HARDDISK", "SN-SYNAPSE-01", "1.0", 8192, false);
+    sample_nvm.configure("", "", "", 0, false);
     m_nvm_devices.push_back(sample_nvm);
 
     registerDevice(DeviceDescriptor{
