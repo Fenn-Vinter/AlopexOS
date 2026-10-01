@@ -6,6 +6,8 @@
 #include <fennlib/string>
 #include <skeleton.hpp>
 #include <AlopexOS/chrono.hpp>
+#include <pci.hpp>
+#include <pcie.hpp>
 
 namespace io {
     using namespace fennlib::types;
@@ -141,7 +143,6 @@ namespace io {
                 m_base_address = base_address;
             }
 
-            // The return value works interchangibly as deviceID
             [[nodiscard]] inline auto get_device_locator() const noexcept -> const fennlib::string& {
                 return m_device_locator;
             }
@@ -242,15 +243,16 @@ namespace io {
         fennlib::sequence<DeviceTypes::RAM> m_ram_modules{};
         fennlib::sequence<DeviceTypes::NVM> m_nvm_devices{};
         bool m_initialized{false};
+        Skeleton* skeleton = nullptr;
     public:
         auto registerDevice(const DeviceDescriptor& desc) -> void {
             registry.push_back(desc);
         }
 
-        auto inline init(const Skeleton& skel, Logger& logger) -> void;
+        auto inline init(Skeleton& skel, Logger& logger) -> void;
 
         template<bool debug = false>
-        auto scan_hardware(const Skeleton& skel, Logger* logger) -> void;
+        auto scan_hardware(Logger* logger = nullptr) -> void;
 
         [[nodiscard]] auto get_root_motherboard() const noexcept -> const DeviceTypes::MOTHERBOARD& {
             return m_root_motherboard;
@@ -282,8 +284,8 @@ namespace io {
 }
 
 template<bool debug>
-auto inline io::Synapse::scan_hardware(const Skeleton& skel, Logger* logger) -> void {
-    u64 hhdm = skel.get_hhdm_offset();
+auto inline io::Synapse::scan_hardware(Logger* logger) -> void {
+    u64 hhdm = skeleton->get_hhdm_offset();
     
     const char* mfr = "";
     const char* prod = "";
@@ -304,7 +306,6 @@ auto inline io::Synapse::scan_hardware(const Skeleton& skel, Logger* logger) -> 
             }
         }
     
-
     if (table_phys == 0) {
         if constexpr (debug)
             logger->log(LogLevel::Warning, "Synapse: SMBIOS entry point not found in legacy BIOS range.");
@@ -408,17 +409,69 @@ auto inline io::Synapse::scan_hardware(const Skeleton& skel, Logger* logger) -> 
         }
     }
 
-    DeviceTypes::NVM sample_nvm;
-    sample_nvm.configure("", "", "", 0, false);
-    m_nvm_devices.push_back(sample_nvm);
+    // Intelligent Bus & Device Discovery (PCI vs PCIe via ECAM)
+    u64 ecam_base = skeleton->get_ecam_base(); // Assuming Skeleton provides this from MCFG, or 0 if legacy only
+    bool use_pcie_ecam = (ecam_base != 0);
 
-    registerDevice(DeviceDescriptor{
-        .type = DeviceClass::NVM,
-        .uid = 0x200,
-        .active = true
-    });
+    if constexpr (debug) {
+        if (use_pcie_ecam) {
+            logger->log(LogLevel::Info, "Synapse: PCIe ECAM base found. Using memory-mapped configuration.");
+        } else {
+            logger->log(LogLevel::Info, "Synapse: No PCIe ECAM base found. Falling back to legacy PCI port I/O.");
+        }
+    }
 
-    auto* rsdp = skel.get_rsdp();
+    for (u16 bus = 0; bus < 256; ++bus) {
+        for (u8 dev = 0; dev < 32; ++dev) {
+            for (u8 func = 0; func < 8; ++func) {
+                u16 vendor_id = use_pcie_ecam 
+                    ? io::pcie::read16(ecam_base, static_cast<u8>(bus), dev, func, 0x00)
+                    : io::pci::read16(static_cast<u8>(bus), dev, func, 0x00);
+
+                if (vendor_id == 0xFFFF) {
+                    break; // No device present
+                }
+
+                u8 class_code = use_pcie_ecam
+                    ? io::pcie::read8(ecam_base, static_cast<u8>(bus), dev, func, 0x0B)
+                    : io::pci::read8(static_cast<u8>(bus), dev, func, 0x0B);
+
+                u64 bar0 = use_pcie_ecam
+                    ? io::pcie::get_bar0_ecam(ecam_base, static_cast<u8>(bus), dev, func)
+                    : io::pci::get_bar0(static_cast<u8>(bus), dev, func);
+
+                if (class_code == 0x01) {
+                    DeviceTypes::NVM nvm_device;
+                    nvm_device.configure("Discovered Controller", "", "", 0, true);
+                    m_nvm_devices.push_back(nvm_device);
+
+                    registerDevice(DeviceDescriptor{
+                        .type = DeviceClass::NVM,
+                        .uid = 0x200 + m_nvm_devices.size(),
+                        .mmio_base = bar0,
+                        .mmio_size = 4096,
+                        .active = true
+                    });
+
+                    if constexpr (debug) {
+                        logger->log(LogLevel::Info, "Synapse: Discovered active storage controller with valid MMIO base.");
+                    }
+                }
+
+                if (func == 0) {
+                    u8 header_type = use_pcie_ecam
+                        ? io::pcie::read8(ecam_base, static_cast<u8>(bus), dev, func, 0x0E)
+                        : io::pci::read8(static_cast<u8>(bus), dev, func, 0x0E);
+
+                    if ((header_type & 0x80) == 0) {
+                        break; 
+                    }
+                }
+            }
+        }
+    }
+
+    auto* rsdp = skeleton->get_rsdp();
     u64 rsdp_addr = (rsdp != nullptr) ? reinterpret_cast<fennlib::u64>(rsdp) : 0;
 
     m_root_motherboard.configure(mfr, prod, ver, ser, asset, rsdp_addr);
@@ -431,15 +484,16 @@ auto inline io::Synapse::scan_hardware(const Skeleton& skel, Logger* logger) -> 
     });
 }
 
-auto io::Synapse::init(const Skeleton& skel, Logger& logger) -> void {
+auto io::Synapse::init(Skeleton& skel, Logger& logger) -> void {
     if (!skel.is_initialized()) {
         logger.log(LogLevel::Critical, "Synapse: Skeleton is not initialized, halting system.");
         skel.halt();
     }
+    skeleton = &skel;
 
     logger.log(LogLevel::Info, "Synapse: Beginning initialization sequence.");
     
-    scan_hardware<true>(skel, &logger);
+    scan_hardware<true>(&logger);
     audit_latencies(logger);
 
     m_initialized = true;

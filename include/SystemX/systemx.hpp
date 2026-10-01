@@ -4,9 +4,9 @@
 
 #include <fennlib/types>
 #include <fennlib/string>
-#include <Kernel/DRAMA.hpp>
+#include <kernel/DRAMA.hpp>
 #include <AlopexOS/types.hpp>
-#include "AlopexOS/errorCodes.hpp"
+#include <AlopexOS/errorCodes.hpp>
 
 class SystemX {
     AlopexOS::Kernel::DRAMA* p_drama;

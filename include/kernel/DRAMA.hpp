@@ -1,5 +1,4 @@
 #pragma once
-#include "skeleton.hpp"
 #include <logger.hpp>
 #include <fennlib/types>
 #include <fennlib/sequence>
@@ -25,7 +24,6 @@ namespace AlopexOS::Kernel {
         };
 
         io::Synapse*  p_synapse{nullptr};
-        io::Skeleton* p_skeleton{nullptr};
 
         fennlib::sequence<PhysicalRAM> p_mountedRAM;
 
@@ -33,7 +31,7 @@ namespace AlopexOS::Kernel {
     public:
         DRAMA() = default;
         ~DRAMA() = default;
-        DRAMA(io::Skeleton* skeleton, io::Synapse* synapse) : p_synapse(synapse), p_skeleton{skeleton} {};
+        DRAMA(io::Synapse* synapse) : p_synapse(synapse) {};
 
         template<bool Debug = false>
         inline auto init(io::Logger* logger) -> AlopexOS::error_code;
@@ -104,7 +102,7 @@ inline auto AlopexOS::Kernel::DRAMA::init(io::Logger* logger) -> AlopexOS::error
 
 template<bool Debug>
 inline auto AlopexOS::Kernel::DRAMA::mount_all(io::Logger* logger) -> AlopexOS::error_code {
-    p_synapse->scan_hardware<Debug>(*p_skeleton, logger);
+    p_synapse->scan_hardware<Debug>(logger);
 
     const auto& modules = p_synapse->get_ram_modules();
     if (modules.size() == 0) {
@@ -159,7 +157,7 @@ inline auto AlopexOS::Kernel::DRAMA::mount(DeviceID ram_device_id, io::Logger* l
     const auto* module_ptr = find_module();
 
     if (!module_ptr) {
-        p_synapse->scan_hardware<Debug>(*p_skeleton, logger);
+        p_synapse->scan_hardware<Debug>(logger);
         module_ptr = find_module();
     }
 

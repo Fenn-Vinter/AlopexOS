@@ -8,6 +8,8 @@
 #include <logger.hpp>
 #include <kernel/DRAMA.hpp>
 #include <SystemX/systemx.hpp>
+#include <AlopexOS/avfs.hpp>
+#include <AlopexOS/btrfs.hpp>
 
 // testing library
 #include <SystemX/test_programs.hpp>
@@ -48,10 +50,12 @@ extern "C" void kmain(void) {
     io::Synapse synapse;
     bool synapse_initialized = false;
 
-    AlopexOS::Kernel::DRAMA drama(&skeleton, &synapse);
+    AlopexOS::Kernel::DRAMA drama(&synapse);
     SystemX system_x(&drama);
     bool drama_initialized = false;
     bool systemx_initialized = false;
+    bool avfs_initialized = false;
+    bool btrfs_tested = false;
 
     if constexpr (sys::bootloader::is_limine) {
         bootConsole::write_boot_log("bootloader: Limine");
@@ -163,11 +167,61 @@ extern "C" void kmain(void) {
             ptr[1] = 2;
 
             if (ptr[1] == 2) {
-                bootConsole::write_boot_log("Malloc is operational!");    
+                bootConsole::write_boot_log("Malloc is operational!");
             }
 
             drama_initialized = true;
             bootConsole::write_boot_log("Initialized: DRAMA.");
+        }
+
+        if (!avfs_initialized) {
+            bootConsole::write_boot_log("Initializing: AVFS!...");
+            avfs::init(&synapse);
+            avfs_initialized = true;
+            bootConsole::write_boot_log("Initialized: AVFS.");
+        }
+
+        if (avfs_initialized && !btrfs_tested) {
+            bootConsole::write_boot_log("Testing Btrfs reformat & mount...");
+
+            AlopexOS::types::UID target_uid = fennlib::types::nil;
+            for (const auto& desc : synapse.get_registry()) {
+                if (desc.active && desc.mmio_base != 0) {
+                    target_uid = desc.uid;
+                    break;
+                }
+            }
+
+            if (target_uid != fennlib::types::nil) {
+                bootConsole::write_boot_log("Found active device target for Btrfs test.");
+
+                btrfs::FileSystem test_fs;
+                auto format_err = test_fs.reformat<true>(&synapse, target_uid, &logger);
+                if (format_err == AlopexOS::error_code::Success) {
+                    bootConsole::write_boot_log("Btrfs test: Reformat succeeded.");
+                } else {
+                    bootConsole::write_boot_log("Btrfs test: Reformat failed.");
+                }
+
+                auto mount_err = test_fs.mount<true>(&synapse, target_uid, &logger);
+                if (mount_err == AlopexOS::error_code::Success && test_fs.is_mounted()) {
+                    bootConsole::write_boot_log("Btrfs test: Direct mount succeeded!");
+                } else {
+                    bootConsole::write_boot_log("Btrfs test: Direct mount failed.");
+                }
+
+                // 2. AVFS Interface Mount Test
+                auto avfs_mount_err = avfs::g_interface->mount<true>(target_uid, &logger);
+                if (avfs_mount_err == AlopexOS::error_code::Success) {
+                    bootConsole::write_boot_log("AVFS test: Interface mount succeeded!");
+                } else {
+                    bootConsole::write_boot_log("AVFS test: Interface mount failed.");
+                }
+            } else {
+                bootConsole::write_boot_log("Btrfs test skipped: No active MMIO device found in registry.");
+            }
+
+            btrfs_tested = true;
         }
 
         if (!systemx_initialized) {
@@ -195,10 +249,10 @@ extern "C" void kmain(void) {
             u32 indicator_step = frame_counter % 64;
 
             bootPixel::drawLoadingIndicator(
-                primary->getBackBuffer(), 
-                primary->getPitch(), 
-                (primary->getWidth() - 256) / 2, 
-                (primary->getHeight() - 256) / 2, 
+                primary->getBackBuffer(),
+                primary->getPitch(),
+                (primary->getWidth() - 256) / 2,
+                (primary->getHeight() - 256) / 2,
                 indicator_step
             );
             

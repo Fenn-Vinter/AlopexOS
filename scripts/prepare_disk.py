@@ -12,7 +12,8 @@ def run(cmd, **kwargs):
     subprocess.run(cmd, check=True, **kwargs)
 
 def short_name_for(filename):
-    parts = filename.upper().split(".", 1)
+    basename = filename.replace("\\", "/").split("/")[-1]
+    parts = basename.upper().split(".", 1)
     base = parts[0]
     ext = parts[1] if len(parts) > 1 else ""
 
@@ -28,19 +29,26 @@ def lfn_checksum(short_name):
         checksum = (checksum + value) & 0xFF
     return checksum
 
-def make_directory_entries(filename, short_name):
+def make_directory_entries(filename, short_name, is_subdir=False, cluster=0, size=0):
     parts = filename.upper().split(".", 1)
     extension = parts[1] if len(parts) > 1 else ""
+    
+    attr = 0x10 if is_subdir else 0x20
+    clean_short_name = short_name.ljust(11)[:11]
+    
     if len(parts[0]) <= 8 and len(extension) <= 3:
         entry = bytearray(32)
-        entry[0:11] = short_name.encode("ascii")
+        entry[0:11] = clean_short_name.encode("ascii")
+        entry[11] = attr
+        struct.pack_into("<H", entry, 26, cluster)
+        struct.pack_into("<I", entry, 28, size)
         return [entry]
 
     encoded = filename.encode("utf-16le")
     characters = [encoded[index:index + 2] for index in range(0, len(encoded), 2)]
     characters.append(b"\x00\x00")
     chunks = [characters[index:index + 13] for index in range(0, len(characters), 13)]
-    checksum = lfn_checksum(short_name)
+    checksum = lfn_checksum(clean_short_name)
     entries = []
 
     for chunk_index in range(len(chunks) - 1, -1, -1):
@@ -61,12 +69,15 @@ def make_directory_entries(filename, short_name):
         entries.append(entry)
 
     short_entry = bytearray(32)
-    short_entry[0:11] = short_name.encode("ascii")
+    short_entry[0:11] = clean_short_name.encode("ascii")
+    short_entry[11] = attr
+    struct.pack_into("<H", short_entry, 26, cluster)
+    struct.pack_into("<I", short_entry, 28, size)
     entries.append(short_entry)
     return entries
 
 def format_fat16_and_write_files(f, start_sector, num_sectors, files_to_copy):
-    """Formats the specified sector range as FAT16 and writes boot files directly into the raw image."""
+    """Formats the specified sector range as FAT16 and writes nested boot files into the raw image."""
     sectors_per_cluster = 4
     bytes_per_cluster = sectors_per_cluster * SECTOR_SIZE
     reserved_sectors = 1
@@ -111,37 +122,25 @@ def format_fat16_and_write_files(f, start_sector, num_sectors, files_to_copy):
         f.seek((fat_start_sector + (i * sectors_per_fat)) * SECTOR_SIZE)
         f.write(fat_bytes)
 
-    # 3. Populate Root Directory & File Data Clusters
-    root_dir_start_sector = fat_start_sector + (num_fats * sectors_per_fat)
-    root_dir_bytes = bytearray(root_entries * 32)
-    
+    # Organize files into directory hierarchy
+    # Root directory entries list
+    root_entries_list = []
+    efi_entries_list = []
+    boot_entries_list = []
+
     current_cluster = 2
-    root_entry_offset = 0
 
-    for filename, src_path in files_to_copy.items():
-        if not os.path.exists(src_path):
-            print(f"[!] Error: Boot file missing at: {src_path}")
+    def allocate_file_clusters(file_path):
+        nonlocal current_cluster, fat_bytes
+        if not os.path.exists(file_path):
+            print(f"[!] Error: Boot file missing at: {file_path}")
             sys.exit(1)
-
-        with open(src_path, "rb") as sf:
+        with open(file_path, "rb") as sf:
             file_data = sf.read()
-
         file_size = len(file_data)
         clusters_needed = (file_size + bytes_per_cluster - 1) // bytes_per_cluster
-
-        short_name = short_name_for(filename)
-        directory_entries = make_directory_entries(filename, short_name)
-        for directory_entry in directory_entries:
-            root_dir_bytes[root_entry_offset:root_entry_offset + 32] = directory_entry
-            root_entry_offset += 32
-
-        entry = directory_entries[-1]
-        entry[11] = 0x20
-        struct.pack_into("<H", entry, 26, current_cluster)
-        struct.pack_into("<I", entry, 28, file_size)
-        root_dir_bytes[root_entry_offset - 32:root_entry_offset] = entry
-
-        file_offset = 0
+        
+        start_cl = current_cluster
         for cl_idx in range(clusters_needed):
             cluster_num = current_cluster + cl_idx
             next_cluster = (cluster_num + 1) if cl_idx < clusters_needed - 1 else 0xFFFF
@@ -149,15 +148,78 @@ def format_fat16_and_write_files(f, start_sector, num_sectors, files_to_copy):
 
             cluster_sector = data_start_sector + ((cluster_num - 2) * sectors_per_cluster)
             f.seek(cluster_sector * SECTOR_SIZE)
-            chunk = file_data[file_offset:file_offset + bytes_per_cluster]
+            chunk = file_data[cl_idx * bytes_per_cluster : (cl_idx + 1) * bytes_per_cluster]
             f.write(chunk)
-            file_offset += bytes_per_cluster
-
+        
         current_cluster += clusters_needed
+        return start_cl, file_size
+
+    # Process files
+    for virtual_path, src_path in files_to_copy.items():
+        parts = virtual_path.replace("\\", "/").split("/")
+        if len(parts) == 1:
+            cl, sz = allocate_file_clusters(src_path)
+            s_name = short_name_for(parts[0])
+            for entry in make_directory_entries(parts[0], s_name, False, cl, sz):
+                root_entries_list.append(entry)
+        elif len(parts) == 3 and parts[0].upper() == "EFI" and parts[1].upper() == "BOOT":
+            cl, sz = allocate_file_clusters(src_path)
+            s_name = short_name_for(parts[2])
+            for entry in make_directory_entries(parts[2], s_name, False, cl, sz):
+                boot_entries_list.append(entry)
+
+    # Create EFI directory cluster if we have boot files
+    efi_cluster = 0
+    if boot_entries_list:
+        efi_cluster = current_cluster
+        # Allocate cluster for EFI dir
+        struct.pack_into("<H", fat_bytes, efi_cluster * 2, 0xFFFF)
+        current_cluster += 1
+
+        # BOOT subdirectory inside EFI
+        boot_cluster = current_cluster
+        struct.pack_into("<H", fat_bytes, boot_cluster * 2, 0xFFFF)
+        current_cluster += 1
+
+        # Write BOOT contents into its cluster sector
+        boot_sector = data_start_sector + ((boot_cluster - 2) * sectors_per_cluster)
+        f.seek(boot_sector * SECTOR_SIZE)
+        boot_dir_bytes = bytearray(bytes_per_cluster)
+        offset = 0
+        for entry in boot_entries_list:
+            boot_dir_bytes[offset:offset+32] = entry
+            offset += 32
+        f.write(boot_dir_bytes)
+
+        # Write EFI contents (containing BOOT dir entry)
+        efi_sector = data_start_sector + ((efi_cluster - 2) * sectors_per_cluster)
+        f.seek(efi_sector * SECTOR_SIZE)
+        efi_dir_bytes = bytearray(bytes_per_cluster)
+        boot_dir_entries = make_directory_entries("BOOT", "BOOT    ", True, boot_cluster, 0)
+        offset = 0
+        for entry in boot_dir_entries:
+            efi_dir_bytes[offset:offset+32] = entry
+            offset += 32
+        f.write(efi_dir_bytes)
+
+        # Add EFI entry to root
+        efi_dir_entries_root = make_directory_entries("EFI", "EFI     ", True, efi_cluster, 0)
+        for entry in efi_dir_entries_root:
+            root_entries_list.append(entry)
+
+    # Write Root Directory
+    root_dir_start_sector = fat_start_sector + (num_fats * sectors_per_fat)
+    root_dir_bytes = bytearray(root_entries * 32)
+    offset = 0
+    for entry in root_entries_list:
+        if offset < len(root_dir_bytes):
+            root_dir_bytes[offset:offset+32] = entry
+            offset += 32
 
     f.seek(root_dir_start_sector * SECTOR_SIZE)
     f.write(root_dir_bytes)
     
+    # Write FAT tables back
     for i in range(num_fats):
         f.seek((fat_start_sector + (i * sectors_per_fat)) * SECTOR_SIZE)
         f.write(fat_bytes)
@@ -182,16 +244,15 @@ def prepare_disk(img_path, kernel_path):
     project_root = os.path.dirname(script_dir)
     limine_dir = os.path.join(project_root, "lib", "limine")
 
-    # Locate limine.conf
     conf_path = os.path.join(project_root, "boot", "limine.conf")
     if not os.path.exists(conf_path):
         conf_path = os.path.join(project_root, "limine.conf")
 
-    # Locate limine-bios stage file
     limine_sys = os.path.join(limine_dir, "limine-bios.sys")
     if not os.path.exists(limine_sys):
         limine_sys = os.path.join(limine_dir, "limine-bios-hd.bin")
 
+    limine_efi = os.path.join(limine_dir, "BOOTX64.EFI")
     limine_bin = os.path.join(limine_dir, "limine-tool-windows-x86", "limine.exe")
 
     print(f"[*] Creating {IMAGE_SIZE_MB}MB raw image...")
@@ -202,19 +263,23 @@ def prepare_disk(img_path, kernel_path):
         f.write(b"\0" * total_bytes)
         write_mbr(f, total_sectors)
 
-        # Inject stage 3 sys file, config, and kernel into FAT partition
         files = {
             "limine-bios.sys": limine_sys,
             "limine.conf": conf_path,
             "AlopexOS": kernel_path
         }
         
-        print("[*] Formatting FAT16 partition and copying stage 3 + kernel...")
+        if os.path.exists(limine_efi):
+            files["EFI/BOOT/BOOTX64.EFI"] = limine_efi
+
+        print("[*] Formatting FAT partition and building UEFI directory structures...")
         format_fat16_and_write_files(f, PARTITION_START_SECTOR, total_sectors - PARTITION_START_SECTOR, files)
 
     print("[*] Deploying Limine BIOS bootloader...")
-    run([limine_bin, "bios-install", img_path])
-    print("[SUCCESS] Disk image ready!")
+    if os.path.exists(limine_bin):
+        run([limine_bin, "bios-install", img_path])
+    
+    print("[SUCCESS] Disk image ready for UEFI and BIOS via Ventoy!")
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:

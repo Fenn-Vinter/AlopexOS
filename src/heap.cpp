@@ -35,23 +35,31 @@ extern "C" {
     }
 }
 
-auto operator new(usize size) -> void* {
+void* operator new(usize size) {
     return kmalloc(size);
 }
 
-auto operator new[](usize size) -> void* {
+void* operator new[](usize size) {
     return kmalloc(size);
 }
 
-auto operator delete(void* ptr) noexcept -> void {
+void* operator new(usize, void* p) noexcept {
+    return p;
+}
+
+void* operator new[](usize, void* p) noexcept {
+    return p;
+}
+
+void operator delete(void* ptr) noexcept {
     kfree(ptr);
 }
 
-auto operator delete(void* ptr, usize size) noexcept -> void {
+void operator delete(void* ptr, usize size) noexcept {
     (void)size;
     kfree(ptr);
 }
 
-auto operator delete[](void* ptr) noexcept -> void {
+void operator delete[](void* ptr) noexcept {
     kfree(ptr);
 }
